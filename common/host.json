@@ -1,0 +1,27 @@
+{
+  "deploy": {
+    "10.113.52.78": [
+      "fe",
+      22,
+      "root",
+      "NextGen",
+      true
+    ],
+    "10.113.81.67": [
+      "fe",
+      22,
+      "root",
+      "NextGen",
+      false
+    ],
+    "10.113.52.94": [
+      "scef",
+      22,
+      "root",
+      "NextGen",
+      false
+    ]
+  }
+}
+
+
