@@ -53,7 +53,7 @@ def revert(manifest):
             r(jar, des)
 
 def qp_restart():
-    os.system("service qp_procmgr restart");
+    os.system("service qp_procmgr restart")
 
 
 act={"-u":update,"-r":revert}
