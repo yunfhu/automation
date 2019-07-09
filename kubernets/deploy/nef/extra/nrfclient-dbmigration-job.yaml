@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nrfclient-kong-migration
+spec:
+  template:
+    spec:
+      containers:
+        - name: nrfclient-kong-migration
+          image: cassandra:3
+          command: ["/bin/bash", "-c", "sleep 60; cqlsh cassandra-of-nrfclient-kong.tchart < /kong-init/init_kong.cql"]
+          volumeMounts:
+          - name: kong-init
+            mountPath: /kong-init
+      volumes:
+        - name: kong-init
+          configMap:
+            name: kong-for-nrfclient-init
+      restartPolicy: Never

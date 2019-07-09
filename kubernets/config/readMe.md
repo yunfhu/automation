@@ -1,4 +1,4 @@
-#1. create admin service acoount and bind with cluster role
+#1. create admin service acount and bind with cluster role
 ```
 apiVersion: v1
 kind: ServiceAccount
@@ -40,8 +40,6 @@ subjects:
 - kind: ServiceAccount
   name: hull
   namespace: kube-system
-
-
 ```
 
 # 2. config.yaml
@@ -61,7 +59,7 @@ contexts:
 - context:
   name: AsiaInfo
 ```
-#3. 设置config.yaml
+#3. create kubeconfig file with config.yaml as template
 
 kubectl config --kubeconfig=./config.yaml  set-cluster AsiaInfo --server=https://10.21.20.88:6443 --insecure-skip-tls-verify
 kubectl config  --kubeconfig=./config.yaml set-credentials huyf --token=$(kubectl get secret huyf-token-n8w5k -n kube-system -o jsonpath={.data.token} | base64 -D)

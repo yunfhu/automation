@@ -1,0 +1,47 @@
+{{- if $.Values.global.udmSimulatorEnable }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-udm-simulator2
+  name: {{ .Release.Name }}-udm-simulator2
+spec:
+  replicas: {{ .Values.deploymentUdmSimulatorService2.replicas }}
+  selector:
+    matchLabels:
+      io.kompose.service: {{ .Release.Name }}-udm-simulator2
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        io.kompose.service: {{ .Release.Name }}-udm-simulator2
+    spec:
+      containers:
+        {{- if .Values.deploymentUdmSimulatorService2.imageTag }}
+        - image: "{{ .Values.deploymentUdmSimulatorService2.image }}:{{ .Values.deploymentUdmSimulatorService2.imageTag }}"
+        {{- else }}
+        - image: "{{ .Values.deploymentUdmSimulatorService2.image }}:{{ .Values.global.simulatorImageTag }}"
+        {{- end }}
+          env:
+            - name: SIM_LOG_LEVEL
+              value: INFO
+          imagePullPolicy: Always
+          name: udm-simulator2
+          ports:
+            - containerPort: 5807
+              protocol: TCP
+            - name: prometheus
+              containerPort: 5811
+              protocol: TCP
+          resources: 
+            requests:
+              cpu: "{{ .Values.deploymentUdmSimulatorService2.cpuRequest }}"
+            limits:
+              cpu: "{{ .Values.deploymentUdmSimulatorService2.cpuLimit }}"
+    {{- if $.Values.deploymentUdmSimulatorService2.nodeSelectorEnabled }}
+      nodeSelector:
+        {{ $.Values.deploymentUdmSimulatorService2.nodeSelectorKey }}: {{ $.Values.deploymentUdmSimulatorService2.nodeSelectorValue }}
+    {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler
+{{- end }}

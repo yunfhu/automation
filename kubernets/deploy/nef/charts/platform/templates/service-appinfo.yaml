@@ -1,0 +1,15 @@
+{{- if $.Values.global.appinfoServiceEnable }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: "{{ .Release.Name }}-appinfo"
+  labels:
+    app: "{{ .Release.Name }}-appinfo"
+spec:
+  ports:
+  - name: http
+    port: 5906
+  type: NodePort
+  selector:
+    app: "{{ .Release.Name }}-appinfo"
+{{- end }}

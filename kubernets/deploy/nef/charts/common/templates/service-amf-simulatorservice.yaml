@@ -1,0 +1,25 @@
+{{- if $.Values.global.amfSimulatorEnable }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-amf-simulator
+    category: common
+  name: {{ .Release.Name }}-amf-simulator
+spec:
+  externalTrafficPolicy: Cluster
+  {{if and (.Values.deploymentAmfSimulatorService.loadBalancerIP) (eq .Values.serviceAmfSimulatorService.type "LoadBalancer")}}
+  loadBalancerIP: {{ .Values.deploymentAmfSimulatorService.loadBalancerIP }}
+  {{end}}
+  ports:
+    - name: http
+      port: 5807
+      protocol: TCP
+    - name: prometheus
+      port: 5811
+      protocol: TCP
+  selector:
+    io.kompose.service: {{ .Release.Name }}-amf-simulator
+  sessionAffinity: None
+  type: {{ .Values.serviceAmfSimulatorService.type }}
+{{- end }}

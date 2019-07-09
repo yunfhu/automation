@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    service: cassandra-of-kong
+  name: cassandra-of-kong
+spec:
+  type: NodePort
+  ports:
+    - name: endpoint
+      port: 9042
+      targetPort: 9042
+  selector:
+    app: cassandra-of-kong
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: cassandra-of-kong
+spec:
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        app: cassandra-of-kong
+    spec:
+      containers:
+      - name: cassandra-of-kong
+        image: cassandra:3
+        ports:
+        - name: endpoint
+          containerPort: 9042
+      restartPolicy: Always

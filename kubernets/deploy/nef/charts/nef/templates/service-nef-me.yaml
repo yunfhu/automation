@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-meservice
+    category: nef
+  name: {{ .Release.Name }}-meservice
+spec:
+  externalTrafficPolicy: Cluster
+  {{if and (.Values.deploymentNefMeService.loadBalancerIP) (eq .Values.serviceNefMeService.type "LoadBalancer")}}
+  loadBalancerIP: {{ .Values.deploymentNefMeService.loadBalancerIP }}
+  {{end}}
+  ports:
+    - name: http
+      {{if .Values.deploymentNefMeService.apiPort}}
+      port: {{ .Values.deploymentNefMeService.apiPort }}
+      {{else}}
+      port: 5807
+      {{end}}
+      protocol: TCP
+      targetPort: 8001
+    - name: prometheus
+      protocol: TCP
+      port: 5900
+      targetPort: 9000
+  selector:
+    io.kompose.service: {{ .Release.Name }}-meservice
+  sessionAffinity: None
+  type: {{ .Values.serviceNefMeService.type }}

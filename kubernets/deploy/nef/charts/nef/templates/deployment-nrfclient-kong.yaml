@@ -1,0 +1,69 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: nrfclient-kong
+  name: nrfclient-kong
+spec:
+  replicas: {{ .Values.deploymentKongService.replicas  }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      io.kompose.service: nrfclient-kong
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        io.kompose.service: nrfclient-kong
+    spec:
+#      initContainers:
+#        - env:
+#            - name: TIMEOUT
+#              value: "400"
+#            - name: FAIL_ON_TIMEOUT
+#              value: "true"
+#            - name: CHECK_METHOD
+#              value: mysql
+#            - name: MYSQL_DATABASE
+#              value: {{ .Values.deploymentKongService.envMysqlDatabase | quote }}
+#            - name: MYSQL_HOST
+#              value: {{ .Values.global.envMysqlHost | quote }}
+#            - name: MYSQL_PASSWORD
+#              value: {{ .Values.global.envMysqlPassword | quote }}
+#            - name: MYSQL_PORT
+#              value: {{ .Values.global.envMysqlPort | quote }}
+#            - name: MYSQL_USER
+#              value: {{ .Values.global.envMysqlUser | quote }}
+#          name: wait-for-database
+#          image: {{ .Values.global.imageServiceDetector | quote }}
+      containers:
+        - envFrom:
+            - configMapRef:
+                name: nrfclient-kong-config
+        {{- if .Values.deploymentKongService.imageTag }}
+          image: "{{ .Values.deploymentKongService.image }}:0.14"
+        {{- else }}
+          image: "{{ .Values.deploymentKongService.image }}:0.14"
+        {{- end }}
+          imagePullPolicy: Always
+          name: nrfclient-kong
+          ports:
+            - name: proxy
+              containerPort: 8000
+            - name: ssl-proxy
+              containerPort: 8443
+            - name: admin
+              containerPort: 8001
+            - name: ssl-admin
+              containerPort: 8444
+          resources: 
+            requests:
+              cpu: "{{ .Values.deploymentKongService.cpuRequest }}"
+            limits:
+              cpu: "{{ .Values.deploymentKongService.cpuLimit }}"
+    {{- if $.Values.deploymentKongService.nodeSelectorEnabled }}
+      nodeSelector:
+        {{ $.Values.deploymentKongService.nodeSelectorKey }}: {{ $.Values.deploymentKongService.nodeSelectorValue }}
+    {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler

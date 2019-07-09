@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kong-migration
+spec:
+  template:
+    spec:
+      containers:
+        - name: kong-migration
+          image: kong:latest
+          command: ["kong"]
+          args: ["migrations","bootstrap"]
+          envFrom:
+            - configMapRef:
+                name: kong-config
+      restartPolicy: Never

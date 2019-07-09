@@ -1,0 +1,582 @@
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kong-for-nrfclient-init
+data:
+  init_kong.cql: |
+    DROP KEYSPACE IF EXISTS "kong";
+    CREATE KEYSPACE kong WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  AND durable_writes = true;
+
+    CREATE TABLE kong.snis (
+        partition text,
+        id uuid,
+        certificate_id uuid,
+        created_at timestamp,
+        name text,
+        PRIMARY KEY (partition, id)
+    ) WITH CLUSTERING ORDER BY (id ASC)
+        AND bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+    CREATE INDEX snis_certificate_id_idx ON kong.snis (certificate_id);
+    CREATE INDEX snis_name_idx ON kong.snis (name);
+
+    CREATE TABLE kong.schema_migrations (
+        id text PRIMARY KEY,
+        migrations list<text>
+    ) WITH bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+
+    CREATE TABLE kong.ratelimiting_metrics (
+        route_id uuid,
+        service_id uuid,
+        api_id uuid,
+        identifier text,
+        period_date timestamp,
+        period text,
+        value counter,
+        PRIMARY KEY ((route_id, service_id, api_id, identifier, period_date, period))
+    ) WITH bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+
+    CREATE TABLE kong.routes (
+        partition text,
+        id uuid,
+        created_at timestamp,
+        hosts list<text>,
+        methods set<text>,
+        paths list<text>,
+        preserve_host boolean,
+        protocols set<text>,
+        regex_priority int,
+        service_id uuid,
+        strip_path boolean,
+        updated_at timestamp,
+        PRIMARY KEY (partition, id)
+    ) WITH CLUSTERING ORDER BY (id ASC)
+        AND bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+    CREATE INDEX routes_service_id_idx ON kong.routes (service_id);
+
+    CREATE TABLE kong.jwt_secrets (
+        id uuid PRIMARY KEY,
+        algorithm text,
+        consumer_id uuid,
+        created_at timestamp,
+        key text,
+        rsa_public_key text,
+        secret text
+    ) WITH bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+    CREATE INDEX jwt_secrets_secret_idx ON kong.jwt_secrets (secret);
+    CREATE INDEX jwt_secrets_key_idx ON kong.jwt_secrets (key);
+    CREATE INDEX jwt_secrets_consumer_id_idx ON kong.jwt_secrets (consumer_id);
+
+    CREATE TABLE kong.consumers (
+        id uuid PRIMARY KEY,
+        created_at timestamp,
+        custom_id text,
+        username text
+    ) WITH bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+    CREATE INDEX consumers_username_idx ON kong.consumers (username);
+    CREATE INDEX consumers_custom_id_idx ON kong.consumers (custom_id);
+
+    CREATE TABLE kong.apis (
+        id uuid PRIMARY KEY,
+        created_at timestamp,
+        hosts text,
+        http_if_terminated boolean,
+        https_only boolean,
+        methods text,
+        name text,
+        preserve_host boolean,
+        retries int,
+        strip_uri boolean,
+        upstream_connect_timeout int,
+        upstream_read_timeout int,
+        upstream_send_timeout int,
+        upstream_url text,
+        uris text
+    ) WITH bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+    CREATE INDEX apis_name_idx ON kong.apis (name);
+
+    CREATE TABLE kong.basicauth_credentials (
+        id uuid PRIMARY KEY,
+        consumer_id uuid,
+        created_at timestamp,
+        password text,
+        username text
+    ) WITH bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+    CREATE INDEX basicauth_credentials_username_idx ON kong.basicauth_credentials (username);
+    CREATE INDEX basicauth_consumer_id ON kong.basicauth_credentials (consumer_id);
+
+    CREATE TABLE kong.oauth2_tokens (
+        id uuid PRIMARY KEY,
+        access_token text,
+        api_id uuid,
+        authenticated_userid text,
+        created_at timestamp,
+        credential_id uuid,
+        expires_in int,
+        refresh_token text,
+        scope text,
+        service_id uuid,
+        token_type text
+    ) WITH bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+    CREATE INDEX oauth2_tokens_authenticated_userid_idx ON kong.oauth2_tokens (authenticated_userid);
+    CREATE INDEX oauth2_tokens_service_id_idx ON kong.oauth2_tokens (service_id);
+    CREATE INDEX oauth2_tokens_api_id_idx ON kong.oauth2_tokens (api_id);
+    CREATE INDEX oauth2_tokens_refresh_token_idx ON kong.oauth2_tokens (refresh_token);
+    CREATE INDEX oauth2_credential_id_idx ON kong.oauth2_tokens (credential_id);
+    CREATE INDEX oauth2_tokens_access_token_idx ON kong.oauth2_tokens (access_token);
+
+    CREATE TABLE kong.upstreams (
+        id uuid PRIMARY KEY,
+        created_at timestamp,
+        hash_fallback text,
+        hash_fallback_header text,
+        hash_on text,
+        hash_on_cookie text,
+        hash_on_cookie_path text,
+        hash_on_header text,
+        healthchecks text,
+        name text,
+        slots int
+    ) WITH bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+    CREATE INDEX upstreams_name_idx ON kong.upstreams (name);
+
+    CREATE TABLE kong.oauth2_authorization_codes (
+        id uuid PRIMARY KEY,
+        api_id uuid,
+        authenticated_userid text,
+        code text,
+        created_at timestamp,
+        credential_id uuid,
+        scope text,
+        service_id uuid
+    ) WITH bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+    CREATE INDEX oauth2_authorization_codes_credential_id_idx ON kong.oauth2_authorization_codes (credential_id);
+    CREATE INDEX oauth2_authorization_codes_service_id_idx ON kong.oauth2_authorization_codes (service_id);
+    CREATE INDEX oauth2_authorization_codes_api_id_idx ON kong.oauth2_authorization_codes (api_id);
+    CREATE INDEX oauth2_authorization_codes_code_idx ON kong.oauth2_authorization_codes (code);
+    CREATE INDEX oauth2_authorization_codes_authenticated_userid_idx ON kong.oauth2_authorization_codes (authenticated_userid);
+
+    CREATE TABLE kong.keyauth_credentials (
+        id uuid PRIMARY KEY,
+        consumer_id uuid,
+        created_at timestamp,
+        key text
+    ) WITH bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+    CREATE INDEX keyauth_credentials_key_idx ON kong.keyauth_credentials (key);
+    CREATE INDEX keyauth_consumer_id ON kong.keyauth_credentials (consumer_id);
+
+    CREATE TABLE kong.oauth2_credentials (
+        id uuid PRIMARY KEY,
+        client_id text,
+        client_secret text,
+        consumer_id uuid,
+        created_at timestamp,
+        name text,
+        redirect_uri text
+    ) WITH bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+    CREATE INDEX oauth2_credentials_client_id_idx ON kong.oauth2_credentials (client_id);
+    CREATE INDEX oauth2_credentials_consumer_id_idx ON kong.oauth2_credentials (consumer_id);
+    CREATE INDEX oauth2_credentials_client_secret_idx ON kong.oauth2_credentials (client_secret);
+
+    CREATE TABLE kong.cluster_events (
+        channel text,
+        at timestamp,
+        node_id uuid,
+        id uuid,
+        data text,
+        nbf timestamp,
+        PRIMARY KEY (channel, at, node_id, id)
+    ) WITH CLUSTERING ORDER BY (at ASC, node_id ASC, id ASC)
+        AND bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = 'Kong cluster events broadcasting and polling'
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 86400
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+
+    CREATE TABLE kong.acls (
+        id uuid PRIMARY KEY,
+        consumer_id uuid,
+        created_at timestamp,
+        group text
+    ) WITH bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+    CREATE INDEX acls_group_idx ON kong.acls (group);
+    CREATE INDEX acls_consumer_id ON kong.acls (consumer_id);
+
+    CREATE TABLE kong.services (
+        partition text,
+        id uuid,
+        connect_timeout int,
+        created_at timestamp,
+        host text,
+        name text,
+        path text,
+        port int,
+        protocol text,
+        read_timeout int,
+        retries int,
+        updated_at timestamp,
+        write_timeout int,
+        PRIMARY KEY (partition, id)
+    ) WITH CLUSTERING ORDER BY (id ASC)
+        AND bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+    CREATE INDEX services_name_idx ON kong.services (name);
+
+    CREATE TABLE kong.plugins (
+        id uuid,
+        name text,
+        api_id uuid,
+        config text,
+        consumer_id uuid,
+        created_at timestamp,
+        enabled boolean,
+        route_id uuid,
+        service_id uuid,
+        PRIMARY KEY (id, name)
+    ) WITH CLUSTERING ORDER BY (name ASC)
+        AND bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+    CREATE INDEX plugins_api_id_idx ON kong.plugins (api_id);
+    CREATE INDEX plugins_consumer_id_idx ON kong.plugins (consumer_id);
+    CREATE INDEX plugins_route_id_idx ON kong.plugins (route_id);
+    CREATE INDEX plugins_name_idx ON kong.plugins (name);
+    CREATE INDEX plugins_service_id_idx ON kong.plugins (service_id);
+
+    CREATE TABLE kong.certificates (
+        partition text,
+        id uuid,
+        cert text,
+        created_at timestamp,
+        key text,
+        PRIMARY KEY (partition, id)
+    ) WITH CLUSTERING ORDER BY (id ASC)
+        AND bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+
+    CREATE TABLE kong.hmacauth_credentials (
+        id uuid PRIMARY KEY,
+        consumer_id uuid,
+        created_at timestamp,
+        secret text,
+        username text
+    ) WITH bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+    CREATE INDEX hmacauth_credentials_username_idx ON kong.hmacauth_credentials (username);
+    CREATE INDEX hmacauth_consumer_id ON kong.hmacauth_credentials (consumer_id);
+
+    CREATE TABLE kong.response_ratelimiting_metrics (
+        route_id uuid,
+        service_id uuid,
+        api_id uuid,
+        identifier text,
+        period_date timestamp,
+        period text,
+        value counter,
+        PRIMARY KEY ((route_id, service_id, api_id, identifier, period_date, period))
+    ) WITH bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+
+    CREATE TABLE kong.targets (
+        id uuid PRIMARY KEY,
+        created_at timestamp,
+        target text,
+        upstream_id uuid,
+        weight int
+    ) WITH bloom_filter_fp_chance = 0.01
+        AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+        AND comment = ''
+        AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+        AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+        AND crc_check_chance = 1.0
+        AND dclocal_read_repair_chance = 0.1
+        AND default_time_to_live = 0
+        AND gc_grace_seconds = 864000
+        AND max_index_interval = 2048
+        AND memtable_flush_period_in_ms = 0
+        AND min_index_interval = 128
+        AND read_repair_chance = 0.0
+        AND speculative_retry = '99PERCENTILE';
+    CREATE INDEX targets_upstream_id_idx ON kong.targets (upstream_id);
+    CREATE INDEX targets_target_idx ON kong.targets (target);
+    INSERT INTO "kong"."schema_migrations" ("id", "migrations") VALUES ('rate-limiting', ['2015-08-03-132400_init_ratelimiting', '2016-07-25-471385_ratelimiting_policies', '2017-11-30-120000_add_route_and_service_id']);
+    INSERT INTO "kong"."schema_migrations" ("id", "migrations") VALUES ('datadog', ['2017-06-09-160000_datadog_schema_changes']);
+    INSERT INTO "kong"."schema_migrations" ("id", "migrations") VALUES ('acl', ['2015-08-25-841841_init_acl']);
+    INSERT INTO "kong"."schema_migrations" ("id", "migrations") VALUES ('statsd', ['2017-06-09-160000_statsd_schema_changes']);
+    INSERT INTO "kong"."schema_migrations" ("id", "migrations") VALUES ('basic-auth', ['2015-08-03-132400_init_basicauth']);
+    INSERT INTO "kong"."schema_migrations" ("id", "migrations") VALUES ('response-transformer', ['2016-03-10-160000_resp_trans_schema_changes']);
+    INSERT INTO "kong"."schema_migrations" ("id", "migrations") VALUES ('ip-restriction', ['2016-05-24-remove-cache']);
+    INSERT INTO "kong"."schema_migrations" ("id", "migrations") VALUES ('cors', ['2017-03-14_multiple_orgins']);
+    INSERT INTO "kong"."schema_migrations" ("id", "migrations") VALUES ('response-ratelimiting', ['2015-08-21_init_response-rate-limiting', '2016-08-04-321512_response-rate-limiting_policies', '2017-12-19-120000_add_route_and_service_id_to_response_ratelimiting']);
+    INSERT INTO "kong"."schema_migrations" ("id", "migrations") VALUES ('oauth2', ['2015-08-03-132400_init_oauth2', '2015-08-24-215800_cascade_delete_index', '2016-02-29-435612_remove_ttl', '2016-04-14-283949_serialize_redirect_uri', '2016-07-15-oauth2_code_credential_id', '2016-09-19-oauth2_code_index', '2016-09-19-oauth2_api_id', '2016-12-15-set_global_credentials', '2017-10-19-set_auth_header_name_default', '2017-10-11-oauth2_new_refresh_token_ttl_config_value', '2018-01-09-oauth2_c_add_service_id']);
+    INSERT INTO "kong"."schema_migrations" ("id", "migrations") VALUES ('ldap-auth', ['2017-10-23-150900_header_type_default']);
+    INSERT INTO "kong"."schema_migrations" ("id", "migrations") VALUES ('jwt', ['2015-06-09-jwt-auth', '2016-03-07-jwt-alg', '2017-07-31-120200_jwt-auth_preflight_default', '2017-10-25-211200_jwt_cookie_names_default', '2018-03-15-150000_jwt_maximum_expiration']);
+    INSERT INTO "kong"."schema_migrations" ("id", "migrations") VALUES ('core', ['2015-01-12-175310_skeleton', '2015-01-12-175310_init_schema', '2015-11-23-817313_nodes', '2016-02-25-160900_remove_null_consumer_id', '2016-02-29-121813_remove_ttls', '2016-09-05-212515_retries_step_1', '2016-09-05-212515_retries_step_2', '2016-09-16-141423_upstreams', '2016-12-14-172100_move_ssl_certs_to_core', '2016-11-11-151900_new_apis_router_1', '2016-11-11-151900_new_apis_router_2', '2016-11-11-151900_new_apis_router_3', '2017-01-24-132600_upstream_timeouts', '2017-01-24-132600_upstream_timeouts_2', '2017-03-27-132300_anonymous', '2017-04-04-145100_cluster_events', '2017-05-19-173100_remove_nodes_table', '2017-07-28-225000_balancer_orderlist_remove', '2017-11-07-192000_upstream_healthchecks', '2017-10-27-134100_consistent_hashing_1', '2017-11-07-192100_upstream_healthchecks_2', '2017-10-27-134100_consistent_hashing_2', '2017-09-14-140200_routes_and_services', '2017-10-25-180700_plugins_routes_and_services', '2018-02-23-142400_targets_add_index', '2018-03-22-141700_create_new_ssl_tables', '2018-03-26-234600_copy_records_to_new_ssl_tables', '2018-03-27-002500_drop_old_ssl_tables', '2018-03-16-160000_index_consumers', '2018-05-17-173100_hash_on_cookie']);
+    INSERT INTO "kong"."schema_migrations" ("id", "migrations") VALUES ('request-transformer', ['2016-03-10-160000_req_trans_schema_changes']);
+    INSERT INTO "kong"."schema_migrations" ("id", "migrations") VALUES ('tcp-log', ['2017-12-13-120000_tcp-log_tls']);
+    INSERT INTO "kong"."schema_migrations" ("id", "migrations") VALUES ('hmac-auth', ['2015-09-16-132400_init_hmacauth', '2017-06-21-132400_init_hmacauth']);
+    INSERT INTO "kong"."schema_migrations" ("id", "migrations") VALUES ('key-auth', ['2015-07-31-172400_init_keyauth', '2017-07-31-120200_key-auth_preflight_default']);
+    INSERT INTO "kong"."routes" ("partition", "id", "created_at", "paths", "preserve_host", "protocols", "regex_priority", "service_id", "strip_path", "updated_at") VALUES ('routes', 028daa69-2202-484e-8d6a-abe72175867d, 1536211395000, ['/sm-service'], False, {'http', 'https'}, 0, f93f8094-8c78-4532-813c-606e7d1e83ef, True, 1536211395000);
+    INSERT INTO "kong"."routes" ("partition", "id", "created_at", "paths", "preserve_host", "protocols", "regex_priority", "service_id", "strip_path", "updated_at") VALUES ('routes', f2c707ba-803a-4afc-81e5-eb08420738dc, 1536211395000, ['/bsf-service'],False, {'http', 'https'}, 0, 2d39fc90-36ab-4b95-8e14-c10cc5edca87, True, 1536211395000);
+    INSERT INTO "kong"."routes" ("partition", "id", "created_at", "paths", "preserve_host", "protocols", "regex_priority", "service_id", "strip_path", "updated_at") VALUES ('routes', 03906964-47c7-49fa-af70-354ea5b91223, 1536211395000, ['/am-service'], False, {'http', 'https'}, 0, 868edb2b-f15b-456d-bd9d-47468e5ea906, True, 1536211395000);
+    INSERT INTO "kong"."routes" ("partition", "id", "created_at", "paths", "preserve_host", "protocols", "regex_priority", "service_id", "strip_path", "updated_at") VALUES ('routes', 835c7a8f-5c4e-4e20-b28a-9b4d3c046fce, 1536211395000, ['/sm-ingress'], False, {'http', 'https'}, 0, b3fbab3a-ff8c-41f5-95a9-ec0f40b16444, True, 1536211395000);
+    INSERT INTO "kong"."routes" ("partition", "id", "created_at", "paths", "preserve_host", "protocols", "regex_priority", "service_id", "strip_path", "updated_at") VALUES ('routes', 3c046fce-28ae-45c4-e20b-835c7a8f9b4d, 1536211395000, ['/bsf-ingress'], False, {'http', 'https'}, 0, c10cc5ed-8e14-4b95-36ab-ca872d39fc90, True, 1536211395000);
+    INSERT INTO "kong"."routes" ("partition", "id", "created_at", "paths", "preserve_host", "protocols", "regex_priority", "service_id", "strip_path", "updated_at") VALUES ('routes', 4e207a8f-835c-5c4e-b28a-46fce9b4d3c0, 1536211395000, ['/user-service'], False, {'http', 'https'}, 0, f15bdb2b-868e-456d-4746-bd9d8e5ea906, True, 1536211395000);
+    INSERT INTO "kong"."routes" ("partition", "id", "created_at", "paths", "preserve_host", "protocols", "regex_priority", "service_id", "strip_path", "updated_at") VALUES ('routes', b28a7a8f-835c-4e20-5c4e-3c0469b4dfce, 1536211395000, ['/nrf-client'], False, {'http', 'https'}, 0, 456ddb2b-f15b-868e-a906-47468e5ebd9d, True, 1536211395000);
+    INSERT INTO "kong"."services" ("partition", "id", "connect_timeout", "created_at", "host", "name", "path", "port", "protocol", "read_timeout", "retries", "updated_at", "write_timeout") VALUES ('services', f93f8094-8c78-4532-813c-606e7d1e83ef, 60000, 1536211343000, 'ocpm-staging-pcf-pcf-smservice', 'sm-service', '/', 5809, 'http', 60000, 5, 1536211343000, 60000);
+    INSERT INTO "kong"."services" ("partition", "id", "connect_timeout", "created_at", "host", "name", "path", "port", "protocol", "read_timeout", "retries", "updated_at", "write_timeout") VALUES ('services', 2d39fc90-36ab-4b95-8e14-c10cc5edca87, 60000, 1536211343000, 'ocpm-staging-pcf-bsf-management-service', 'bsf-service', '/', 5903, 'http', 60000, 5, 1536211343000, 60000);
+    INSERT INTO "kong"."services" ("partition", "id", "connect_timeout", "created_at", "host", "name", "path", "port", "protocol", "read_timeout", "retries", "updated_at", "write_timeout") VALUES ('services', 868edb2b-f15b-456d-bd9d-47468e5ea906, 60000, 1536211343000, 'ocpm-staging-pcf-pcf-amservice', 'am-service', '/', 5904, 'http', 60000, 5, 1536211343000,60000);
+    INSERT INTO "kong"."services" ("partition", "id", "connect_timeout", "created_at", "host", "name", "path", "port", "protocol", "read_timeout", "retries", "updated_at", "write_timeout") VALUES ('services', f15bdb2b-868e-456d-4746-bd9d8e5ea906, 60000, 1536211343000, 'ocpm-staging-pcf-pcf-userservice', 'user-service', '/', 5808, 'http', 60000, 5, 1536211343000,60000);
+    INSERT INTO "kong"."services" ("partition", "id", "connect_timeout", "created_at", "host", "name", "path", "port", "protocol", "read_timeout", "retries", "updated_at", "write_timeout") VALUES ('services', 456ddb2b-f15b-868e-a906-47468e5ebd9d, 60000, 1536211343000, 'nef-nrf-clientservice', 'nrf-client', '/', 5910, 'http', 60000, 5, 1536211343000,60000); 
+    INSERT INTO "kong"."services" ("partition", "id", "connect_timeout", "created_at", "host", "name", "path", "port", "protocol", "read_timeout", "retries", "updated_at", "write_timeout") VALUES ('services', b3fbab3a-ff8c-41f5-95a9-ec0f40b16444, 60000, 1536211343000, 'istio-ingressgateway.istio-system.svc', 'sm-ingress', '/', 80, 'http', 60000, 5, 1536211343000,60000);
+    INSERT INTO "kong"."services" ("partition", "id", "connect_timeout", "created_at", "host", "name", "path", "port", "protocol", "read_timeout", "retries", "updated_at", "write_timeout") VALUES ('services', c10cc5ed-8e14-4b95-36ab-ca872d39fc90, 60000, 1536211343000, 'istio-ingressgateway.istio-system.svc', 'bsf-ingress', '/', 80, 'http', 60000, 5, 1536211343000, 60000);

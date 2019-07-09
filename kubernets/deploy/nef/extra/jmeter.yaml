@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    service: jmeter
+  name: jmeter
+spec:
+  type: NodePort
+  ports:
+    - name: p5929
+      port: 5929
+      targetPort: 5901
+    - name: p6901
+      port: 6901
+      targetPort: 6901
+  selector:
+    app: jmeter
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: jmeter
+spec:
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        app: jmeter
+    spec:
+      containers:
+      - name: jmeter
+        image: docker-registry.openstack.cn.oracle.com/faye/pcftestdriver:1.17
+        ports:
+          - name: p5901
+            containerPort: 5901
+          - name: p6901
+            containerPort: 6901
+      restartPolicy: Always
+

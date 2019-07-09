@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-cm-service
+    category: common
+  name: {{ .Release.Name }}-cm-service
+spec:
+  externalTrafficPolicy: Cluster
+  {{if and (.Values.deploymentNefCmService.loadBalancerIP) (eq .Values.serviceNefCmService.type "LoadBalancer")}}
+  loadBalancerIP: {{ .Values.deploymentNefCmService.loadBalancerIP }}
+  {{end}}
+  ports:
+    - name: http
+      {{if .Values.deploymentNefCmService.apiPort}}
+      port: {{ .Values.deploymentNefCmService.apiPort }}
+      {{else}}
+      port: 5808
+      {{end}}
+      protocol: TCP
+      targetPort: 5807
+  selector:
+    io.kompose.service: {{ .Release.Name }}-cm-service
+  sessionAffinity: None
+  type: {{ .Values.serviceNefCmService.type }}

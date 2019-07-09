@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: capif-config
+  namespace: yunfhu
+data:
+  MYSQL_HOST: capif-mysql
+  MYSQL_USER: root
+  MYSQL_PASSWORD: root
+  MYSQL_PORT: "3306"
+  MYSQL_DATABASE: ocpm_capif_core
+  IO_THREADS: "16"
+  NEF_ME_LOGLEVEL: info
+  SERVER_PORT: "8001"
+  WORKER_THREADS: "256"

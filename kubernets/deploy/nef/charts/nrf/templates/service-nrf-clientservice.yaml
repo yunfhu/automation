@@ -1,0 +1,23 @@
+{{- if $.Values.global.nrfClientEnable }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-nrf-clientservice
+    category: common
+  name: {{ .Release.Name }}-nrf-clientservice
+spec:
+  externalTrafficPolicy: Cluster
+  {{if and (.Values.deploymentNrfClientService.loadBalancerIP) (eq .Values.serviceNrfClientService.type "LoadBalancer")}}
+  loadBalancerIP: {{ .Values.deploymentNrfClientService.loadBalancerIP }}
+  {{end}}
+  ports:
+    - name: http
+      port: 5910
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    io.kompose.service: {{ .Release.Name }}-nrf-clientservice
+  sessionAffinity: None
+  type: {{ .Values.serviceNrfClientService.type }}
+{{- end }}

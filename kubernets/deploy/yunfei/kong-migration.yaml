@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: kong-migration
+spec:
+  containers:
+    - name: kong-migration
+      image: kong:latest
+      command: ["kong"]
+      args: ["migrations","bootstrap"]
+      envFrom:
+        - configMapRef:
+            name: kong-config
+      ports:
+        - name: proxy
+          containerPort: 8000
+        - name: ssl-proxy
+          containerPort: 8443
+        - name: admin
+          containerPort: 8001
+        - name: ssl-admin
+          containerPort: 8444
+  restartPolicy: Always

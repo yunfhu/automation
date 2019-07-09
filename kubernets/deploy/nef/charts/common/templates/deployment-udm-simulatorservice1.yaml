@@ -1,0 +1,47 @@
+{{- if $.Values.global.udmSimulatorEnable }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-udm-simulator1
+  name: {{ .Release.Name }}-udm-simulator1
+spec:
+  replicas: {{ .Values.deploymentUdmSimulatorService1.replicas }}
+  selector:
+    matchLabels:
+      io.kompose.service: {{ .Release.Name }}-udm-simulator1
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        io.kompose.service: {{ .Release.Name }}-udm-simulator1
+    spec:
+      containers:
+        {{- if .Values.deploymentUdmSimulatorService1.imageTag }}
+        - image: "{{ .Values.deploymentUdmSimulatorService1.image }}:{{ .Values.deploymentUdmSimulatorService1.imageTag }}"
+        {{- else }}
+        - image: "{{ .Values.deploymentUdmSimulatorService1.image }}:{{ .Values.global.simulatorImageTag }}"
+        {{- end }}
+          env:
+            - name: SIM_LOG_LEVEL
+              value: INFO
+          imagePullPolicy: Always
+          name: udr-simulator
+          ports:
+            - containerPort: 5807
+              protocol: TCP
+            - name: prometheus
+              containerPort: 5811
+              protocol: TCP
+          resources: 
+            requests:
+              cpu: "{{ .Values.deploymentUdmSimulatorService1.cpuRequest }}"
+            limits:
+              cpu: "{{ .Values.deploymentUdmSimulatorService1.cpuLimit }}"
+    {{- if $.Values.deploymentUdmSimulatorService1.nodeSelectorEnabled }}
+      nodeSelector:
+        {{ $.Values.deploymentUdmSimulatorService1.nodeSelectorKey }}: {{ $.Values.deploymentUdmSimulatorService1.nodeSelectorValue }}
+    {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler
+{{- end }}

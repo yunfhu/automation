@@ -1,0 +1,107 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-meservice
+  name: {{ .Release.Name }}-meservice
+spec:
+  replicas: {{ .Values.deploymentNefMeService.replicas  }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      io.kompose.service: {{ .Release.Name }}-meservice
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        io.kompose.service: {{ .Release.Name }}-meservice
+    spec:
+      initContainers:
+        - env:
+            - name: TIMEOUT
+              value: "400"
+            - name: FAIL_ON_TIMEOUT
+              value: "true"
+            - name: CHECK_METHOD
+              value: mysql
+            - name: MYSQL_DATABASE
+              value: {{ .Values.deploymentNefMeService.envMysqlDatabase | quote }}
+            - name: MYSQL_HOST
+              value: {{ .Values.global.envMysqlHost | quote }}
+            - name: MYSQL_PASSWORD
+              value: {{ .Values.global.envMysqlPassword | quote }}
+            - name: MYSQL_PORT
+              value: {{ .Values.global.envMysqlPort | quote }}
+            - name: MYSQL_USER
+              value: {{ .Values.global.envMysqlUser | quote }}
+          name: wait-for-database
+          image: {{ .Values.global.imageServiceDetector | quote }}
+      containers:
+        - env:
+            - name: LOGGING_LEVEL_ROOT
+              value: WARN
+            - name: JAEGER_ENDPOINT
+              value: http://jaeger-collector:14268/api/traces
+#            - name: JAEGER_AGENT_HOST
+#              value: {{ .Values.global.envJaegerAgentHost | quote }}
+#            - name: JAEGER_AGENT_PORT
+#              value: {{ .Values.global.envJaegerAgentPort | quote }}
+            - name: JAEGER_SERVICE_NAME
+              value: {{ .Values.deploymentNefMeService.envJaegerServiceName | quote }}
+            - name: MYSQL_DATABASE
+              value: {{ .Values.deploymentNefMeService.envMysqlDatabase | quote }}
+            - name: JAEGER_SAMPLER_TYPE
+              value: const
+            - name: JAEGER_SAMPLER_PARAM
+              value: "1"        
+            - name: MYSQL_HOST
+              value: {{ .Values.global.envMysqlHost | quote }}
+            - name: MYSQL_PASSWORD
+              value: {{ .Values.global.envMysqlPassword | quote }}
+            - name: MYSQL_PORT
+              value: {{ .Values.global.envMysqlPort | quote }}
+            - name: MYSQL_USER
+              value: {{ .Values.global.envMysqlUser | quote }}
+            - name: CFG_SERVER_HOST
+              value: {{ .Release.Name }}-config-service
+            - name: CFG_SERVER_PORT
+              value: "5807"
+            - name: SERVER_PORT
+              value: {{ .Values.deploymentNefMeService.envServerPort | quote }}
+            - name: NEF_UDM_BASEURL
+              value: {{ .Values.deploymentNefMeService.envUdmBaseURL | quote }}
+            - name: NEF_AMF_BASEURL
+              value: {{ .Values.deploymentNefMeService.envAmfBaseURL | quote }}
+            - name: NEF_ME_REPORT_URL
+              value: {{ .Values.deploymentNefMeService.envMeReportURL | quote }}
+            - name: NEF_ME_REPORT_AMF_URL
+              value: "http://{{ .Release.Name }}-meservice.{{ .Release.Namespace }}:80/notification/namf"
+            - name: NEF_ME_REPORT_UDM_URL
+              value: "http://{{ .Release.Name }}-meservice.{{ .Release.Namespace }}:80/notification/nudm"
+            - name: NEF_CAPIF_BASEURL
+              value: "http://{{ .Release.Name }}-capif-core:8001/published-apis/v1"
+              
+        {{- if .Values.deploymentNefMeService.imageTag }}
+          image: "{{ .Values.deploymentNefMeService.image }}:{{ .Values.deploymentNefMeService.imageTag }}"
+        {{- else }}
+          image: "{{ .Values.deploymentNefMeService.image }}:{{ .Values.global.imageTag }}"
+        {{- end }}
+          imagePullPolicy: Always
+          name: meservice
+          ports:
+            - name: service-api
+              containerPort: 8001
+              protocol: TCP
+            - name: prometheus
+              containerPort: 9000
+          resources: 
+            requests:
+              cpu: "{{ .Values.deploymentNefMeService.cpuRequest }}"
+            limits:
+              cpu: "{{ .Values.deploymentNefMeService.cpuLimit }}"
+    {{- if $.Values.deploymentNefMeService.nodeSelectorEnabled }}
+      nodeSelector:
+        {{ $.Values.deploymentNefMeService.nodeSelectorKey }}: {{ $.Values.deploymentNefMeService.nodeSelectorValue }}
+    {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler

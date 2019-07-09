@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-application-config
+data:
+  profile: |
+    [appcfg]
+    nrfApiRoot=http://{{ .Release.Name }}-nrf-simulator.{{.Release.Namespace}}.svc.cluster.local:5807
+    nrfClientApiRoot=http://{{ .Release.Name }}-nrf-clientservice.{{.Release.Namespace}}.svc.cluster.local:5910
+    nrfClientType=NEF
+    nrfClientDiscoveryTypes=UDM,AMF
+    nrfClientSubscribeTypes=UDM,AMF
+    appProfiles=[{"nfInstanceId": "fe7d992b-0541-4c7d-ab84-c6d71b1b0888", "nfType": "NEF", "nfStatus": "REGISTERED", "plmn": null, "nsiList": null, "fqdn": "oracle.com", "interPlmnFqdn": null, "ipv4Addresses": null, "ipv6Addresses": null, "priority": null, "capacity": null, "load": 80, "locality": null, "udrInfo": null, "udmInfo": null, "ausfInfo": null, "amfInfo": null, "smfInfo": null, "upfInfo": null, "pcfInfo": {"dnnList": ["dnn1", "dnn2"], "supiRangeList": [{"start": "123456789040000", "end": "123456789049999"}]}, "bsfInfo": null, "customInfo": null, "recoveryTime": null, "nfServices": [{"serviceInstanceId": "03063893-cf9e-4f7a-9827-067f6fa9efgh", "serviceName": "nnef-pfdmanagement", "versions": [{"apiVersionInUri": "v1", "apiFullVersion": "1.R15.1.0", "expiry": "2019-08-03T18:55:08.871+0000"}], "scheme": "http", "nfServiceStatus": "REGISTERED", "fqdn": "nef-meservice", "interPlmnFqdn": null, "ipEndPoints": [{"ipv4Address": null, "ipv6Address": null, "transport": "TCP", "port": 5807}], "apiPrefix": null, "defaultNotificationSubscriptions": null, "allowedPlmns": null, "allowedNfTypes": null, "allowedNfDomains": null, "allowedNssais": null, "priority": null, "capacity": null, "load": null, "recoveryTime": null, "supportedFeatures": null}], "snssais": null}]

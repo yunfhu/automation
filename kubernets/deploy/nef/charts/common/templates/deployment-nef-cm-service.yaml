@@ -1,0 +1,81 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-cm-service
+  name: {{ .Release.Name }}-cm-service
+spec:
+  replicas: {{ .Values.deploymentNefCmService.replicas }}
+  selector:
+    matchLabels:
+      io.kompose.service: {{ .Release.Name }}-cm-service
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        io.kompose.service: {{ .Release.Name }}-cm-service
+    spec:
+      initContainers:
+        - env:
+            - name: TIMEOUT
+              value: "30"
+            - name: FAIL_ON_TIMEOUT
+              value: "false"
+            - name: CHECK_METHOD
+              value: curl
+            - name: TARGET_HOST
+              value: {{ .Release.Name }}-config-service
+            - name: TARGET_PORT
+              value: "5807"
+            - name: TARGET_PATH
+              value: swagger-ui.html
+            - name: EXPECTED_HTTP_CODE
+              value: "200"
+          name: wait-for-config-service
+          image: {{ .Values.global.imageServiceDetector | quote }}
+      containers:
+        - env:
+            - name: CFG_SERVER_HOST
+              value: {{ .Release.Name }}-config-service
+            - name: CFG_SERVER_PORT
+              value: "5807"
+            - name: CM_SERVER_PORT
+              value: "5807"
+            - name: DB_SERVER_HOST
+              value: {{ .Release.Name }}-nef-dbservice
+            - name: DB_SERVER_PORT
+              value: "5805"
+            - name: JAEGER_AGENT_HOST
+              value: {{ .Values.global.envJaegerAgentHost | quote }}
+            - name: JAEGER_AGENT_PORT
+              value: {{ .Values.global.envJaegerAgentPort | quote }}
+            - name: JAEGER_SERVICE_NAME
+              value: {{ .Values.deploymentNefCmService.envJaegerServiceName | quote }}
+            - name: OCPM_CONFIG_APP_ID
+              value: {{ .Values.deploymentNefCmService.envOcpmConfigAppId | quote }}
+            - name: PRE_ADDRESS
+              value: {{ .Release.Name }}-ocpm-pre
+            - name: PRE_TEST_PORT
+              value: "5805"
+
+        {{- if .Values.deploymentNefCmService.imageTag }}
+          image: "{{ .Values.deploymentNefCmService.image }}:{{ .Values.deploymentNefCmService.imageTag }}"
+        {{- else }}
+          image: "{{ .Values.deploymentNefCmService.image }}:{{ .Values.global.imageTag }}"
+        {{- end }}
+          imagePullPolicy: Always
+          name: cm-service
+          ports:
+            - containerPort: 5807
+              protocol: TCP
+          resources: 
+            requests:
+              cpu: "{{ .Values.deploymentNefCmService.cpuRequest }}"
+            limits:
+              cpu: "{{ .Values.deploymentNefCmService.cpuLimit }}"
+    {{- if $.Values.deploymentNefCmService.nodeSelectorEnabled }}
+      nodeSelector:
+        {{ $.Values.deploymentNefCmService.nodeSelectorKey }}: {{ $.Values.deploymentNefCmService.nodeSelectorValue }}
+    {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler

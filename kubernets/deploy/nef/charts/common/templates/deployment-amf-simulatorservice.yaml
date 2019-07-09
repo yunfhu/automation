@@ -1,0 +1,47 @@
+{{- if $.Values.global.amfSimulatorEnable }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-amf-simulator
+  name: {{ .Release.Name }}-amf-simulator
+spec:
+  replicas: {{ .Values.deploymentAmfSimulatorService.replicas }}
+  selector:
+    matchLabels:
+      io.kompose.service: {{ .Release.Name }}-amf-simulator
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        io.kompose.service: {{ .Release.Name }}-amf-simulator
+    spec:
+      containers:
+        {{- if .Values.deploymentAmfSimulatorService.imageTag }}
+        - image: "{{ .Values.deploymentAmfSimulatorService.image }}:{{ .Values.deploymentAmfSimulatorService.imageTag }}"
+        {{- else }}
+        - image: "{{ .Values.deploymentAmfSimulatorService.image }}:{{ .Values.global.simulatorImageTag }}"
+        {{- end }}
+          env:
+            - name: SIM_LOG_LEVEL
+              value: INFO
+          imagePullPolicy: Always
+          name: udr-simulator
+          ports:
+            - containerPort: 5807
+              protocol: TCP
+            - name: prometheus
+              containerPort: 5811
+              protocol: TCP
+          resources: 
+            requests:
+              cpu: "{{ .Values.deploymentAmfSimulatorService.cpuRequest }}"
+            limits:
+              cpu: "{{ .Values.deploymentAmfSimulatorService.cpuLimit }}"
+    {{- if $.Values.deploymentAmfSimulatorService.nodeSelectorEnabled }}
+      nodeSelector:
+        {{ $.Values.deploymentAmfSimulatorService.nodeSelectorKey }}: {{ $.Values.deploymentAmfSimulatorService.nodeSelectorValue }}
+    {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler
+{{- end }}

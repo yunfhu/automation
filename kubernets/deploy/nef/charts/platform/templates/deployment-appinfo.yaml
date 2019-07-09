@@ -1,0 +1,36 @@
+{{- if $.Values.global.appinfoServiceEnable }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: "{{ .Release.Name }}-appinfo"
+spec:
+  replicas: {{ .Values.appinfo.replicas }}
+  template:
+    metadata:
+      labels:
+        app: "{{ .Release.Name }}-appinfo"
+    spec:
+      containers:
+      - name: appinfo               
+        image: "{{ .Values.appinfo.image }}:{{ .Values.appinfo.imageTag }}"
+        env:
+          - name: NAMESPACE
+            value: {{.Release.Namespace}}
+          - name: TOPIC
+            value: NRF.UDM
+          - name: PROMETHEUS_URL
+            value: prome-prometheus-server.nef:80
+          - name: CONFIG_SERVER_URL
+            value: {{ .Release.Name }}-config-service:5807
+          - name: NRF_CLIENT
+          - name: DEBUG
+            value: "true"
+          - name: LOAD_SHADDING_ENABLED
+            value: "false"
+          - name: CATEGORIES_CORE_SERVICES
+            value: {{ .Release.Name }}-meservice  
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5906
+      serviceAccountName: "{{ .Release.Name }}-appinfo" 
+{{- end }}

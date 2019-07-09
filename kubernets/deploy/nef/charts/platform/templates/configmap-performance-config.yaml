@@ -1,0 +1,12 @@
+{{- if $.Values.global.performanceServiceEnable }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: perfinfo-config-{{ .Release.Name }}
+data:
+  dbparam: |
+    [k8s]
+    namespace={{ .Release.Namespace }}
+    prometheus={{ .Values.configmapPerformance.prometheus }}
+    dbserver={{ .Values.configmapPerformance.dbserver }}
+{{- end }}

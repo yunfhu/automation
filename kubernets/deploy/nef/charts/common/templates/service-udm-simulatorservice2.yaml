@@ -1,0 +1,25 @@
+{{- if $.Values.global.udmSimulatorEnable }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-udm-simulator2
+    category: common
+  name: {{ .Release.Name }}-udm-simulator2
+spec:
+  externalTrafficPolicy: Cluster
+  {{if and (.Values.deploymentUdmSimulatorService2.loadBalancerIP) (eq .Values.serviceUdmSimulatorService.type "LoadBalancer")}}
+  loadBalancerIP: {{ .Values.deploymentUdmSimulatorService2.loadBalancerIP }}
+  {{end}}
+  ports:
+    - name: http
+      port: 5807
+      protocol: TCP
+    - name: prometheus
+      port: 5811
+      protocol: TCP
+  selector:
+    io.kompose.service: {{ .Release.Name }}-udm-simulator2
+  sessionAffinity: None
+  type: {{ .Values.serviceUdmSimulatorService.type }}
+{{- end }}

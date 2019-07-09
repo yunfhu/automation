@@ -1,0 +1,9 @@
+apiVersion: v1
+description: Helm chart for pcf components
+keywords:
+- nef
+- nrf
+- common
+- platform
+name: nef
+version: 1.0.0

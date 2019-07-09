@@ -1,0 +1,87 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: try-mysql-config
+  namespace: huyf
+data:
+  MYSQL_ROOT_PASSWORD: root
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: try-mysql-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: 1g-001
+  labels:
+    type: local
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: "/storage/1g001"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: try-mysql
+  labels:
+    service: try-mysql
+spec:
+  ports:
+    - port: 3306
+      targetPort: 3306
+  selector:
+    app: try
+    subapp: mysql
+  type: LoadBalancer
+---
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: try-mysql
+  labels:
+    app: try-mysql
+spec:
+  selector:
+    matchLabels:
+      app: try
+      subapp: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: try
+        subapp: mysql
+    spec:
+      containers:
+        - image: mysql:latest
+          imagePullPolicy: Always
+          name: try-mysql
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: try-mysql-config
+                  key: MYSQL_ROOT_PASSWORD
+          ports:
+            - containerPort: 3306
+              name: mysql
+          volumeMounts:
+            - name: mysql-persistent-storage
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-persistent-storage
+          persistentVolumeClaim:
+            claimName: try-mysql-claim

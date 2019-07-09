@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-capif-core
+    category: nef
+  name: {{ .Release.Name }}-capif-core
+spec:
+  externalTrafficPolicy: Cluster
+  {{if and (.Values.deploymentCapifCoreService.loadBalancerIP) (eq .Values.serviceCapifCoreService.type "LoadBalancer")}}
+  loadBalancerIP: {{ .Values.deploymentCapifCoreService.loadBalancerIP }}
+  {{end}}
+  ports:
+    - name: api
+      {{if .Values.deploymentCapifCoreService.apiPort}}
+      port: {{ .Values.deploymentCapifCoreService.apiPort }}
+      {{else}}
+      port: 8001
+      {{end}}
+      targetPort: 8001
+    - name: health
+      port: 9000
+      targetPort: 9000
+  selector:
+    io.kompose.service: {{ .Release.Name }}-capif-core
+  sessionAffinity: None
+  type: {{ .Values.serviceCapifCoreService.type }}

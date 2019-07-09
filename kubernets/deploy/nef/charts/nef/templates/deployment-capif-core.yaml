@@ -1,0 +1,111 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-capif-core
+  name: {{ .Release.Name }}-capif-core
+spec:
+  replicas: {{ .Values.deploymentCapifCoreService.replicas  }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      io.kompose.service: {{ .Release.Name }}-capif-core
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        io.kompose.service: {{ .Release.Name }}-capif-core
+    spec:
+      initContainers:
+        - env:
+            - name: TIMEOUT
+              value: "400"
+            - name: FAIL_ON_TIMEOUT
+              value: "true"
+            - name: CHECK_METHOD
+              value: mysql
+            - name: MYSQL_DATABASE
+              value: {{ .Values.deploymentCapifCoreService.envMysqlDatabase | quote }}
+            - name: MYSQL_HOST
+              value: {{ .Values.global.envMysqlHost | quote }}
+            - name: MYSQL_PASSWORD
+              value: {{ .Values.global.envMysqlPassword | quote }}
+            - name: MYSQL_PORT
+              value: {{ .Values.global.envMysqlPort | quote }}
+            - name: MYSQL_USER
+              value: {{ .Values.global.envMysqlUser | quote }}
+          name: wait-for-database
+          image: {{ .Values.global.imageServiceDetector | quote }}
+      containers:
+        - env:
+            - name: LOGGING_LEVEL_ROOT
+              value: INFO
+            - name: JAEGER_ENDPOINT
+              value: http://jaeger-collector:14268/api/traces
+            - name: JAEGER_SERVICE_NAME
+              value: {{ .Values.deploymentCapifCoreService.envJaegerServiceName | quote }}
+            - name: MYSQL_DATABASE
+              value: {{ .Values.deploymentCapifCoreService.envMysqlDatabase | quote }}
+            - name: JAEGER_SAMPLER_TYPE
+              value: {{ .Values.deploymentCapifCoreService.envJaegerSamplerType | quote }}
+            - name: JAEGER_SAMPLER_PARAM
+              value: {{ .Values.deploymentCapifCoreService.envJaegerSamplerParam | quote }}
+            - name: MYSQL_HOST
+              value: {{ .Values.global.envMysqlHost | quote }}
+            - name: MYSQL_PASSWORD
+              value: {{ .Values.global.envMysqlPassword | quote }}
+            - name: MYSQL_PORT
+              value: {{ .Values.global.envMysqlPort | quote }}
+            - name: MYSQL_USER
+              value: {{ .Values.global.envMysqlUser | quote }}
+            - name: CFG_SERVER_HOST
+              value: {{ .Release.Name }}-config-service
+            - name: CFG_SERVER_PORT
+              value: "5807"
+            - name: SERVER_PORT
+              value: {{ .Values.deploymentCapifCoreService.envServerPort | quote }}
+            - name: IO_THREADS
+              value: "16"  
+            - name: WORKER_THREADS
+              value: {{ .Values.deploymentCapifCoreService.workerThreads | quote }}
+            - name: NEF_ME_LOGLEVEL
+              value: "info"  
+            - name: KONG_HOST
+              value: "nef-kong"
+            - name: KONG_ADMIN_PROT
+              value: "8001"
+
+        {{- if .Values.deploymentCapifCoreService.imageTag }}
+          image: "{{ .Values.deploymentCapifCoreService.image }}:{{ .Values.deploymentCapifCoreService.imageTag }}"
+        {{- else }}
+          image: "{{ .Values.deploymentCapifCoreService.image }}:{{ .Values.global.imageTag }}"
+        {{- end }}
+          imagePullPolicy: Always
+          name: capif-core
+          ports:
+            - name: api
+              containerPort: 8001
+            - name: health
+              containerPort: 9000
+          volumeMounts:
+            - name: capif-support
+              mountPath: /config/capif-services.yaml
+              subPath: capif-services
+            - name: capif-support
+              mountPath: /config/capif-certs.yaml
+              subPath: capif-certs
+          resources: 
+            requests:
+              cpu: "{{ .Values.deploymentCapifCoreService.cpuRequest }}"
+            limits:
+              cpu: "{{ .Values.deploymentCapifCoreService.cpuLimit }}"        
+      volumes:
+        - name: capif-support
+          configMap:
+            name: {{ .Release.Name }}-capif-support  
+    {{- if $.Values.deploymentCapifCoreService.nodeSelectorEnabled }}
+      nodeSelector:
+        {{ $.Values.deploymentCapifCoreService.nodeSelectorKey }}: {{ $.Values.deploymentCapifCoreService.nodeSelectorValue }}
+    {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler

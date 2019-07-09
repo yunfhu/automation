@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: oauth2-service
+spec:
+  containers:
+    - name: oauth2-service
+      image: docker-registry.openstack.cn.oracle.com/ocpm/capif/capif-oauth:0.1
+      imagePullPolicy: Always
+      envFrom:
+        - configMapRef:
+            name: oauth2-config
+      ports:
+        - name: service
+          containerPort: 8080
+        - name: app
+          containerPort: 8081
+  restartPolicy: Always
+

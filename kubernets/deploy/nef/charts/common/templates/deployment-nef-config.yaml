@@ -1,0 +1,79 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-config-service
+  name: {{ .Release.Name }}-config-service
+spec:
+  replicas: {{ .Values.deploymentNefConfig.replicas  }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      io.kompose.service: {{ .Release.Name }}-config-service
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        io.kompose.service: {{ .Release.Name }}-config-service
+    spec:
+      initContainers:
+        - env:
+            - name: TIMEOUT
+              value: "400"
+            - name: FAIL_ON_TIMEOUT
+              value: "true"
+            - name: CHECK_METHOD
+              value: mysql
+            - name: MYSQL_DATABASE
+              value: {{ .Values.deploymentNefConfig.envMysqlDatabase | quote }}
+            - name: MYSQL_HOST
+              value: {{ .Values.global.envMysqlHost | quote }}
+            - name: MYSQL_PASSWORD
+              value: {{ .Values.global.envMysqlPassword | quote }}
+            - name: MYSQL_PORT
+              value: {{ .Values.global.envMysqlPort | quote }}
+            - name: MYSQL_USER
+              value: {{ .Values.global.envMysqlUser | quote }}
+          name: wait-for-database
+          image: {{ .Values.global.imageServiceDetector | quote }}
+      containers:
+        - env:
+            - name: LOGGING_LEVEL_ROOT
+              value: WARN
+            - name: JAEGER_AGENT_HOST
+              value: {{ .Values.global.envJaegerAgentHost | quote }}
+            - name: JAEGER_AGENT_PORT
+              value: {{ .Values.global.envJaegerAgentPort | quote }}
+            - name: JAEGER_SERVICE_NAME
+              value: {{ .Values.deploymentNefConfig.envJaegerServiceName | quote }}
+            - name: MYSQL_DATABASE
+              value: {{ .Values.deploymentNefConfig.envMysqlDatabase | quote }}
+            - name: MYSQL_HOST
+              value: {{ .Values.global.envMysqlHost | quote }}
+            - name: MYSQL_PASSWORD
+              value: {{ .Values.global.envMysqlPassword | quote }}
+            - name: MYSQL_PORT
+              value: {{ .Values.global.envMysqlPort | quote }}
+            - name: MYSQL_USER
+              value: {{ .Values.global.envMysqlUser | quote }}
+        {{- if .Values.deploymentNefConfig.imageTag }}
+          image: "{{ .Values.deploymentNefConfig.image }}:{{ .Values.deploymentNefConfig.imageTag }}"
+        {{- else }}
+          image: "{{ .Values.deploymentNefConfig.image }}:{{ .Values.global.imageTag }}"
+        {{- end }}
+          imagePullPolicy: Always
+          name: config-service
+          ports:
+            - containerPort: 8001
+              protocol: TCP
+          resources: 
+            requests:
+              cpu: "{{ .Values.deploymentNefConfig.cpuRequest }}"
+            limits:
+              cpu: "{{ .Values.deploymentNefConfig.cpuLimit }}"
+    {{- if $.Values.deploymentNefConfig.nodeSelectorEnabled }}
+      nodeSelector:
+        {{ $.Values.deploymentNefConfig.nodeSelectorKey }}: {{ $.Values.deploymentNefConfig.nodeSelectorValue }}
+    {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler

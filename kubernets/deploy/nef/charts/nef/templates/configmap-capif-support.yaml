@@ -1,0 +1,114 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-capif-support
+data:
+  capif-services: |-
+    capif:
+      services:
+        - name: "ocpm-capif"
+          url: "http://{{ .Release.Name }}-capif-core:8001"
+          routes:
+            - name: "ssl_capif"
+              protocols:
+              - "https"
+              hosts:
+              - "ocpm.capif.com"
+          plugins:
+            - name: "rate-limiting"
+              config:
+                second: 12
+                minute: 720
+            - name: "oauth2"
+              config:
+                enable_client_credentials: true
+        - name: "nef-me"
+          url: "http://{{ .Release.Name }}-meservice:5807"
+          routes:
+            - name: "ssl_nefme"
+              protocols:
+              - "https"
+              hosts:
+              - "ocpm.nefme.com"
+          plugins:
+            - name: "rate-limiting"
+              config:
+                second: 12
+                minute: 720
+            - name: "oauth2"
+              config:
+                enable_client_credentials: true
+  capif-certs: |-
+    capif:
+      certs:
+        - name: "capif_cert"
+          snis:
+            - "ocpm.capif.com"
+          cert: |
+            -----BEGIN CERTIFICATE-----
+            MIICSzCCAbQCCQCYbnAVwwm1FzANBgkqhkiG9w0BAQsFADBqMQswCQYDVQQGEwJD
+            TjEQMA4GA1UECAwHSklBTkdTVTEQMA4GA1UEBwwHTkFOSklORzEPMA0GA1UECgwG
+            T1JBQ0xFMQ0wCwYDVQQLDARDR0JVMRcwFQYDVQQDDA5vY3BtLmNhcGlmLmNvbTAe
+            Fw0xOTAxMjQwNTU2MDhaFw0yMDAxMjQwNTU2MDhaMGoxCzAJBgNVBAYTAkNOMRAw
+            DgYDVQQIDAdKSUFOR1NVMRAwDgYDVQQHDAdOQU5KSU5HMQ8wDQYDVQQKDAZPUkFD
+            TEUxDTALBgNVBAsMBENHQlUxFzAVBgNVBAMMDm9jcG0uY2FwaWYuY29tMIGfMA0G
+            CSqGSIb3DQEBAQUAA4GNADCBiQKBgQC+yfH+GkkUDEwaXfScfR2iu9Y+z2nxPuAb
+            xZ+q4IWVV7cqBRc4DVa0DxiPlZprKnay+dD61R12itUFDm2DqD5GYMGCELO5F98w
+            dydI1z7/QNk68nSvbO/qUrPMG0BCGjRWS4UvHRF6tRv5ZrAXe97KsoUOtL9EpvOy
+            oqx108UiyQIDAQABMA0GCSqGSIb3DQEBCwUAA4GBAFV+SB2Nvy7Yb4o0VDyCitMY
+            l5KbQ10cTqpV6NAfUF+SruDSJr2uVR2jKwa8NxAKJhpSBTowq68ezuDrohk2k5Yu
+            iB5g6X7kdktWmNg7WQxlGd5OerS+mUrLCWyjw8efIIMhxN4vTTHQ5XIe749x/pPO
+            YVIK16WGN20vKXASvtPM
+            -----END CERTIFICATE-----
+          key:  |
+            -----BEGIN RSA PRIVATE KEY-----
+            MIICXQIBAAKBgQC+yfH+GkkUDEwaXfScfR2iu9Y+z2nxPuAbxZ+q4IWVV7cqBRc4
+            DVa0DxiPlZprKnay+dD61R12itUFDm2DqD5GYMGCELO5F98wdydI1z7/QNk68nSv
+            bO/qUrPMG0BCGjRWS4UvHRF6tRv5ZrAXe97KsoUOtL9EpvOyoqx108UiyQIDAQAB
+            AoGAZJJpyUwr57CP0XpjvrZJkAY6awPFUhGV663ifB487Lu/Zxwl4DtP0D0A8nen
+            XgSVa8U6v27mSB3pKvAvFK70nBRNAIU0ZwqI36JT7Rgc4WYmwMd5iOQ0Ow0qOBZi
+            lP2j4MyYUGvGSxjOU/N490s282GErGKgDEq4Ahmi67tW3H0CQQD35wwOD3WWcVUK
+            3BF3n7AHbIdrD/vaDUK1tp78bci4/Sltpw8VIBJ/4sxDpgBNlFddklT8Q5kU1ovb
+            MOnERnbfAkEAxQVQwfsaGQ6ihquCN1kb4PuZmVLerGPuXOOHFyt9ckCmTxCiBR8w
+            Lb5JlgnxrxQEqhz09oK3yNQaZkDXP/XjVwJBAKM1lycuoGDyrmWe61URaigJGMKw
+            3EP71P6jg9p3QN4htoO9p91lpyhRHeAvyyVIU5iEPbVzn7YrZhpiApW5OosCQQCh
+            YO46ReSlm6AysO8zSNEWIuA4f3GXQS9wdIolx2C0ohHXd2dOzLIY9eGufSyy3LHJ
+            aXiZJo9Fd767/OaTJGR3AkBcPPbcLQUg317+oP60Ds3t9771GR1/Uauf5LjI9w9u
+            YTzyPyg4QtzJ9bbtwxM8pkntqkmr3EKDAM9jDWHhYc7z
+            -----END RSA PRIVATE KEY-----
+
+        - name: "me_cert"
+          snis:
+            - "ocpm.nefme.com"
+          cert: |
+            -----BEGIN CERTIFICATE-----
+            MIICSzCCAbQCCQDVBD5dRYoGMDANBgkqhkiG9w0BAQsFADBqMQswCQYDVQQGEwJD
+            TjEQMA4GA1UECAwHSklBTkdTVTEQMA4GA1UEBwwHTkFOSklORzEPMA0GA1UECgwG
+            T1JBQ0xFMQ0wCwYDVQQLDARDR0JVMRcwFQYDVQQDDA5vY3BtLm5lZm1lLmNvbTAe
+            Fw0xOTAxMjQwNTQ0MDlaFw0yMDAxMjQwNTQ0MDlaMGoxCzAJBgNVBAYTAkNOMRAw
+            DgYDVQQIDAdKSUFOR1NVMRAwDgYDVQQHDAdOQU5KSU5HMQ8wDQYDVQQKDAZPUkFD
+            TEUxDTALBgNVBAsMBENHQlUxFzAVBgNVBAMMDm9jcG0ubmVmbWUuY29tMIGfMA0G
+            CSqGSIb3DQEBAQUAA4GNADCBiQKBgQDCMuRaQHLdTZRpHUncO38j7gDbCfIZoQpo
+            ThA3rqQyjQXabkqw1KvLyfY7XE+m5YdED2fWqTlErSDFI1Q4tX7qt1ZLytoeGYDo
+            LPWcfl1Z4qfrL8xJGHXhVEnCzn5FUOqSAvEwptJcp89IRFDh4TPRMe0k/GzhoZHQ
+            HJIL4iJGTQIDAQABMA0GCSqGSIb3DQEBCwUAA4GBAEpdvNY61Qr/18LwrgmFBCIi
+            4RVxQw4jRikOoMo4sMp2k83HoOeNrZkAEC5G8kouAciqQv1nCs3xP/OAWYKeWHNF
+            5boqWvU2qsw/mmWtL/KUReV0nmXY7ZwpAU3oITsBwI3iz6adsox4OiIME7qkT/Do
+            zuunKMOoQwVc5N6szcVu
+            -----END CERTIFICATE-----
+          key:   |
+            -----BEGIN RSA PRIVATE KEY-----
+            MIICXgIBAAKBgQDCMuRaQHLdTZRpHUncO38j7gDbCfIZoQpoThA3rqQyjQXabkqw
+            1KvLyfY7XE+m5YdED2fWqTlErSDFI1Q4tX7qt1ZLytoeGYDoLPWcfl1Z4qfrL8xJ
+            GHXhVEnCzn5FUOqSAvEwptJcp89IRFDh4TPRMe0k/GzhoZHQHJIL4iJGTQIDAQAB
+            AoGBAJK0aYe4qk1+fwBNjO+fzrNw6BqQz+EGpFsZpey6tPYvTN2vdiNR9hp0jtxX
+            JyEYwm/rB3HF0yqLc3cZ8lUI3z/Wom/Dob4lA/+yRY3Eew/GxY1cn3N/A1QDj4rX
+            1/IOYbOf0hxBCOQCsvpcaJI525/ouFdKd6CMDo0sm8bW2+ttAkEA4xQ+Kyg7E77S
+            Cd659x9p3PCjeGpFnkE7wxc2IeRjnQf9eODRJJN6trlmL+0VZN+VEgdw44U8/PAD
+            2QmWxC8wlwJBANrunD5ralpzFr2bPwiHG6DbtSOw4K5JYFIZy39GcPu0CGnp1w5v
+            W78mvqXBmTsPIO4AzwRweN/FCm0R9NuVeLsCQQCgvXiQZicDgCT/9ZhgFO2EBxdA
+            KsHjFzwtiiW4cgoNY1WKlmGVaYwJAk4SiNmHETldjMTdWThlt6SRotcFQn47AkAq
+            pjcb1dMXIbp5X2ftIlzYflSQSmHKshKoi8vf1HooHo9RCrPRZRIrb8HOCqPuJGlW
+            1COACuUROpJoYwofSMQHAkEA17HcQf4rfE0F9dQ6D1ZZPwE0gbxQgyE7nmfNbqlT
+            ixLqkTjtUcJ7nvJCVfzN5qMSU6/ld1phS4ROqPDyNtUFsQ==
+            -----END RSA PRIVATE KEY-----

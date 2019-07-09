@@ -1,0 +1,67 @@
+{{- if $.Values.global.performanceServiceEnable }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-performance
+  name: {{ .Release.Name }}-performance
+spec:
+  progressDeadlineSeconds: 600
+  replicas: {{ .Values.deploymentPerformanceService.replicas }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      io.kompose.service: {{ .Release.Name }}-performance
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        io.kompose.service: {{ .Release.Name }}-performance
+    spec:
+      volumes:
+        - name: config-volume
+          configMap:
+            name: perfinfo-config-{{ .Release.Name }}
+            items:
+            - key: dbparam
+              path: db.cfg
+      containers:
+        - env:
+        {{- if .Values.deploymentPerformanceService.imageTag }}
+          image: "{{ .Values.deploymentPerformanceService.image }}:{{ .Values.deploymentPerformanceService.imageTag }}"
+        {{- else }}
+          image: "{{ .Values.deploymentPerformanceService.image }}:{{ .Values.global.imageTag }}"
+        {{- end }}
+          imagePullPolicy: Always
+          name: perf
+          ports:
+            - name: http
+              containerPort: 5905
+              protocol: TCP
+          volumeMounts:
+          - name: config-volume
+            mountPath: /etc/config
+          livenessProbe:
+            httpGet:
+              path: /hello
+              port: 5905
+          readinessProbe:
+            httpGet:
+              path: /hello
+              port: 5905
+          resources: 
+            requests:
+              cpu: "{{ .Values.deploymentPerformanceService.cpuRequest }}"
+            limits:
+              cpu: "{{ .Values.deploymentPerformanceService.cpuLimit }}"
+    {{- if $.Values.deploymentPerformanceService.nodeSelectorEnabled }}
+      nodeSelector:
+        {{ $.Values.deploymentPerformanceService.nodeSelectorKey }}: {{ $.Values.deploymentPerformanceService.nodeSelectorValue }}
+    {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler
+{{- end }}

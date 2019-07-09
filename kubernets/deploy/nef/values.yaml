@@ -1,0 +1,203 @@
+global:
+  apiGatewayEnable: false
+  meServiceEnable: true
+  nrfClientEnable: true
+  ocpmPreEnable: true
+  simulatorImageTag: "staging-7171"
+  udmSimulatorEnable: true
+  amfSimulatorEnable: true
+  nrfSimulatorEnable: true
+  performanceServiceEnable: false
+  appinfoServiceEnable: true
+  imageTag: latest
+  envJaegerAgentHost: ''
+  envJaegerAgentPort: 6831
+  envJaegerCollectorHost: 'jaeger-collector'
+  envJaegerCollectorPort: 14268
+  envMysqlHost: nef-mysql
+  envMysqlPassword: demo
+  envMysqlPort: '3306'
+  envMysqlUser: demo
+#  envMysqlDatabase: pcf
+  imageServiceDetector: docker-registry.openstack.cn.oracle.com/readiness-detector
+nef:
+  deploymentNefMeService:
+    image: docker-registry.openstack.cn.oracle.com/nef_me
+    imageTag: 'staging-6584'
+    envCfgAppId: '18282'
+    envCfgAppName: meservice
+    envCfgTopics: system
+    envHttp2Enabled: 'true'
+    envMysqlDatabase: ocpm_nef_me
+    envJaegerSamplerParam: '1'
+    envJaegerSamplerType: const
+#    envJaegerSamplerType: ratelimiting
+    envJaegerServiceName: nef-me
+    envLoggingLevelRoot: WARN
+    envServerPort: 8001
+    envUdmBaseURL: ''
+    envAmfBaseURL: ''
+    envMeReportURL: ''
+    loadBalancerIP: ''
+    apiPort: ''
+    replicas: 1
+    nodeSelectorEnabled: false
+    nodeSelectorKey: zone
+    nodeSelectorValue: app
+    cpuRequest: 1
+    cpuLimit: 8
+  deploymentKongService:
+    image: kong
+    imageTag: 'latest'   
+    loadBalancerIP: ''
+    replicas: 1
+    nodeSelectorEnabled: false
+    nodeSelectorKey: zone
+    nodeSelectorValue: app
+    cpuRequest: 1
+    cpuLimit: 8
+  deploymentCapifCoreService:
+    image: docker-registry.openstack.cn.oracle.com/capif_core
+    imageTag: 'staging-7220'
+    envCfgAppId: '18285'
+    envCfgAppName: capifcoreservice
+    envCfgTopics: system
+    envHttp2Enabled: 'true'
+    envMysqlDatabase: ocpm_capif_core
+    envJaegerSamplerParam: '1'
+    envJaegerSamplerType: const
+    envJaegerServiceName: capif-core
+    envLoggingLevelRoot: INFO
+    envServerPort: 8001
+    loadBalancerIP: ''
+    apiPort: ''
+    replicas: 1
+    workerThreads: 256
+    nodeSelectorEnabled: false
+    nodeSelectorKey: zone
+    nodeSelectorValue: app
+    cpuRequest: 1
+    cpuLimit: 8
+  serviceNefMeService:
+    type: LoadBalancer
+  serviceKongService:
+    type: LoadBalancer
+  serviceCapifCoreService:
+    type: LoadBalancer
+nrf:
+  deploymentNrfClientService:
+    image: docker-registry.openstack.cn.oracle.com/nrf_clientservice
+    imageTag: 'staging-7171'
+    loadBalancerIP: ''
+    replicas: 1
+    nodeSelectorEnabled: false
+    nodeSelectorKey: zone
+    nodeSelectorValue: app
+    cpuRequest: 1
+    cpuLimit: 8
+  serviceNrfClientService:
+    type: LoadBalancer
+common:
+  deploymentNefCmService:
+    image: docker-registry.openstack.cn.oracle.com/ocpm_cm_service
+    imageTag: 'staging-7176'
+    envJaegerServiceName: nef-cm-service
+    envOcpmConfigAppId: '-1'
+    loadBalancerIP: ''
+    apiPort: 80
+    replicas: 1
+    nodeSelectorEnabled: false
+    nodeSelectorKey: zone
+    nodeSelectorValue: app
+    cpuRequest: 0.5
+    cpuLimit: 8
+  deploymentNefConfig:
+    image: docker-registry.openstack.cn.oracle.com/ocpm_config_server
+    imageTag: 'staging-7171'
+    envJaegerServiceName: nef-config
+    envMysqlDatabase: ocpm_config_server
+    loadBalancerIP: ''
+    apiPort: ''
+    replicas: 1
+    nodeSelectorEnabled: false
+    nodeSelectorKey: zone
+    nodeSelectorValue: app
+    cpuRequest: 0.5
+    cpuLimit: 8
+  deploymentUdmSimulatorService1:
+    image: docker-registry.openstack.cn.oracle.com/udr_simulator
+    loadBalancerIP: ''
+    replicas: 1
+    nodeSelectorEnabled: false
+    nodeSelectorKey: zone
+    nodeSelectorValue: app
+    cpuRequest: 0.5
+    cpuLimit: 4
+  deploymentUdmSimulatorService2:
+    image: docker-registry.openstack.cn.oracle.com/udr_simulator
+    loadBalancerIP: ''
+    replicas: 1
+    nodeSelectorEnabled: false
+    nodeSelectorKey: zone
+    nodeSelectorValue: app
+    cpuRequest: 0.5
+    cpuLimit: 4
+  deploymentUdmSimulatorService3:
+    image: docker-registry.openstack.cn.oracle.com/udr_simulator
+    replicas: 1
+    nodeSelectorEnabled: false
+    nodeSelectorKey: zone
+    nodeSelectorValue: app
+    cpuRequest: 0.5
+    cpuLimit: 4
+  deploymentAmfSimulatorService:
+    image: docker-registry.openstack.cn.oracle.com/udr_simulator
+    loadBalancerIP: ''
+    replicas: 1
+    nodeSelectorEnabled: false
+    nodeSelectorKey: zone
+    nodeSelectorValue: app
+    cpuRequest: 0.5
+    cpuLimit: 4
+  deploymentNrfSimulatorService:
+    image: docker-registry.openstack.cn.oracle.com/udr_simulator
+    loadBalancerIP: ''
+    replicas: 1
+    nodeSelectorEnabled: false
+    nodeSelectorKey: zone
+    nodeSelectorValue: app
+    cpuRequest: 0.5
+    cpuLimit: 4
+  serviceOcpmPre:
+    type: NodePort
+  serviceNefCmService:
+    type: LoadBalancer
+  serviceNefConfig:
+    type: LoadBalancer
+  serviceUdmSimulatorService:
+    type: LoadBalancer
+  serviceAmfSimulatorService:
+    type: NodePort
+  serviceNrfSimulatorService:
+    type: NodePort
+platform:
+  enabled: true
+  deploymentPerformanceService:
+    image: docker-registry.openstack.cn.oracle.com/perf_info
+    imageTag: 'staging-7171'
+    replicas: 1
+    nodeSelectorEnabled: false
+    nodeSelectorKey: zone
+    cpuRequest: 1
+    cpuLimit: 8
+  servicePerformance:
+    type: NodePort
+  configmapPerformance:
+    prometheus: http://prometheus-server.prometheus:5802
+    dbserver: http://10.113.3.166:5905/rec
+  appinfo:
+    image: docker-registry.openstack.cn.oracle.com/app_info
+    imageTag: v5
+    replicas: 1
+
+  

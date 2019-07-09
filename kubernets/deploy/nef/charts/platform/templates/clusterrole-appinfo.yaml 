@@ -1,0 +1,19 @@
+{{- if $.Values.global.appinfoServiceEnable }}
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: ClusterRole
+metadata:
+  labels:
+    app: "{{ .Release.Name }}-appinfo"
+  name: "{{ .Release.Name }}-appinfo"
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - pods
+      - services
+      - nodes
+    verbs:
+      - get
+      - list
+      - watch
+{{- end }}

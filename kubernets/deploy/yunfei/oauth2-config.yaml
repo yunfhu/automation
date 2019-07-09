@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: oauth2-config
+  namespace: yunfhu
+data:
+  kong_oauth_proxy:  "http://kong-service:8443"
+  trust_clients: '[
+     {
+       "client_id": "invoker1",
+       "client_secret": "xyz",
+       "redirect_uris": [
+         "http://localhost:8081/callback"
+       ]
+     },
+     {
+       "client_id": "invoker2",
+       "client_secret": "xyz",
+       "redirect_uris": [
+         "http://localhost:8081/callback"
+       ]
+     },
+     {
+       "client_id": "invoker3",
+       "client_secret": "xyz",
+       "redirect_uris": [
+         "http://localhost:8081/callback"
+       ]
+     }
+     ]'

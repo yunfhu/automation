@@ -1,0 +1,13 @@
+dependencies:
+  - name: common
+    version: 1.0.0
+    # repository: file://../common
+    condition: common.enabled
+  - name: nrf
+    version: 1.0.0
+    # repository: file://../nrf
+    condition: nrf.enabled
+  - name: nef
+    version: 1.0.0
+    # repository: file://../nrf
+    condition: nef.enabled

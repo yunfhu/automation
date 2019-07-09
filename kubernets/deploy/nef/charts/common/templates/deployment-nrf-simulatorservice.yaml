@@ -1,0 +1,47 @@
+{{- if $.Values.global.nrfSimulatorEnable }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-nrf-simulator
+  name: {{ .Release.Name }}-nrf-simulator
+spec:
+  replicas: {{ .Values.deploymentNrfSimulatorService.replicas }}
+  selector:
+    matchLabels:
+      io.kompose.service: {{ .Release.Name }}-nrf-simulator
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        io.kompose.service: {{ .Release.Name }}-nrf-simulator
+    spec:
+      containers:
+        {{- if .Values.deploymentNrfSimulatorService.imageTag }}
+        - image: "{{ .Values.deploymentNrfSimulatorService.image }}:{{ .Values.deploymentNrfSimulatorService.imageTag }}"
+        {{- else }}
+        - image: "{{ .Values.deploymentNrfSimulatorService.image }}:{{ .Values.global.simulatorImageTag }}"
+        {{- end }}
+          env:
+            - name: SIM_LOG_LEVEL
+              value: INFO
+          imagePullPolicy: Always
+          name: udr-simulator
+          ports:
+            - containerPort: 5807
+              protocol: TCP
+            - name: prometheus
+              containerPort: 5811
+              protocol: TCP
+          resources: 
+            requests:
+              cpu: "{{ .Values.deploymentNrfSimulatorService.cpuRequest }}"
+            limits:
+              cpu: "{{ .Values.deploymentNrfSimulatorService.cpuLimit }}"
+    {{- if $.Values.deploymentNrfSimulatorService.nodeSelectorEnabled }}
+      nodeSelector:
+        {{ $.Values.deploymentNrfSimulatorService.nodeSelectorKey }}: {{ $.Values.deploymentNrfSimulatorService.nodeSelectorValue }}
+    {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler
+{{- end }}

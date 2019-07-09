@@ -1,0 +1,50 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: capif-service
+  labels:
+    service: capif-service
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  ports:
+    - name: api
+      port: 8001
+      targetPort: 8001
+    - name: health
+      port: 9000
+      targetPort: 9000
+  selector:
+      app: capif
+      subapp: core
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: capif-core
+  labels:
+    app: capif-core
+spec:
+  replicas: 2
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "false"
+      labels:
+        app: capif
+        subapp: core
+    spec:
+      containers:
+        - name: capif-core
+          image: docker-registry.openstack.cn.oracle.com/ocpm/capif/capif-core:0.1
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: capif-config
+          ports:
+            - name: api
+              containerPort: 8001
+            - name: health
+              containerPort: 9000
+      restartPolicy: Always

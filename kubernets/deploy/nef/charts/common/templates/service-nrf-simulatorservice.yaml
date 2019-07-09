@@ -1,0 +1,25 @@
+{{- if $.Values.global.nrfSimulatorEnable }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-nrf-simulator
+    category: common
+  name: {{ .Release.Name }}-nrf-simulator
+spec:
+  externalTrafficPolicy: Cluster
+  {{if and (.Values.deploymentNrfSimulatorService.loadBalancerIP) (eq .Values.serviceNrfSimulatorService.type "LoadBalancer")}}
+  loadBalancerIP: {{ .Values.deploymentNrfSimulatorService.loadBalancerIP }}
+  {{end}}
+  ports:
+    - name: http
+      port: 5807
+      protocol: TCP
+    - name: prometheus
+      port: 5811
+      protocol: TCP
+  selector:
+    io.kompose.service: {{ .Release.Name }}-nrf-simulator
+  sessionAffinity: None
+  type: {{ .Values.serviceNrfSimulatorService.type }}
+{{- end }}

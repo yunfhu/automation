@@ -1,0 +1,20 @@
+{{- if $.Values.global.performanceServiceEnable }}
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-performance
+    category: common
+  name: {{ .Release.Name }}-performance
+spec:
+  externalTrafficPolicy: Cluster
+  ports:
+    - name: http
+      port: 5905
+      protocol: TCP
+      targetPort: 5905
+  selector:
+    io.kompose.service: {{ .Release.Name }}-performance
+  sessionAffinity: None
+  type: {{ .Values.servicePerformance.type }}
+{{- end }}

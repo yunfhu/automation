@@ -1,0 +1,95 @@
+{{- if $.Values.global.nrfClientEnable }}
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    io.kompose.service: {{ .Release.Name }}-nrf-clientservice
+  name: {{ .Release.Name }}-nrf-clientservice
+spec:
+  replicas: {{ .Values.deploymentNrfClientService.replicas }}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      io.kompose.service: {{ .Release.Name }}-nrf-clientservice
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        io.kompose.service: {{ .Release.Name }}-nrf-clientservice
+    spec:
+      initContainers:
+        - env:
+            - name: TIMEOUT
+              value: "30"
+            - name: FAIL_ON_TIMEOUT
+              value: "false"
+            - name: CHECK_METHOD
+              value: curl
+            - name: TARGET_HOST
+              value: {{ .Release.Name }}-config-service
+            - name: TARGET_PORT
+              value: "5807"
+            - name: TARGET_PATH
+              value: swagger-ui.html
+            - name: EXPECTED_HTTP_CODE
+              value: "200"
+            - name: JAEGER_SERVICE_NAME
+              value: nrf-clientservice
+            - name: API_ROOT_FQDN
+              value: nrfclient-kong
+            - name: PERFORMANCE_SERVICE_NAME
+              value: nef-performance
+            - name: PERFORMANCE_SERVICE_PORT
+              value: "5905"
+          name: wait-for-config-service
+          image: {{ .Values.global.imageServiceDetector | quote }}
+      containers:
+        - env:
+        {{- if .Values.deploymentNrfClientService.imageTag }}
+          image: "{{ .Values.deploymentNrfClientService.image }}:{{ .Values.deploymentNrfClientService.imageTag }}"
+        {{- else }}
+          image: "{{ .Values.deploymentNrfClientService.image }}:{{ .Values.global.imageTag }}"
+        {{- end }}
+          imagePullPolicy: Always
+          name: nrf-clientservice
+          env:
+            - name: NRF_CLIENTSERVICE_NAME
+              value: {{ .Release.Name }}-nrf-clientservice
+            - name: NRF_CLIENTSERVICE_PORT
+              value: "5910"
+            - name: PLATFORM_SERVICE_NAME
+              value: {{ .Release.Name }}-appinfo
+            - name: PLATFORM_SERVICE_PORT
+              value: "5906"
+            - name: PCF_AMSERVICE_NAME
+              value: {{ .Release.Name }}-pcf-amservice
+            - name: PCF_SMSERVICE_NAME
+              value: {{ .Release.Name }}-pcf-smservice
+            - name: PCF_BSFSERVICE_NAME
+              value: {{ .Release.Name }}-bsf-management-service
+            - name: PCF_UDR_SIMULATOR
+              value: {{ .Release.Name }}-udr-simulator
+            - name: CFG_SERVER_HOST
+              value: {{ .Release.Name }}-config-service
+            - name: CFG_SERVER_PORT
+              value: "5807"
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          volumeMounts:
+          - name: config-volume
+            mountPath: /etc/config
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ .Release.Name }}-application-config
+            items:
+            - key: profile
+              path: application.properties
+    {{- if $.Values.deploymentNrfClientService.nodeSelectorEnabled }}
+      nodeSelector:
+        {{ $.Values.deploymentNrfClientService.nodeSelectorKey }}: {{ $.Values.deploymentNrfClientService.nodeSelectorValue }}
+    {{- end }}
+      restartPolicy: Always
+      schedulerName: default-scheduler
+{{- end }}
