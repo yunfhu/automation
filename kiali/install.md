@@ -26,6 +26,12 @@ cd istio-1.2.2
 helm template --set kiali.enabled=true install/kubernetes/helm/istio --name istio --namespace istio-system > $HOME/istio.yaml
 kubectl apply -f $HOME/istio.yaml
 ```
+#5.To open the Kiali UI, execute the following command in your Kubernetes environment:
+```
+kubectl -n istio-system port-forward $(kubectl -n istio-system get pod -l app=kiali -o jsonpath='{.items[0].metadata.name}') 20001:20001
+```
+Visit http://localhost:20001/kiali/console in your web browser.
+
 
 
 
