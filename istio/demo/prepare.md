@@ -20,17 +20,21 @@ kubectl label namespace huyf istio-injection=enabled
 #deploy sample microservice
 kubectl apply -f istio/demo/samples/bookinfo/platform/kube/bookinfo.yaml
 ```
-##2.2. Define the gateway for the application
+## 2.2 To confirm that the Bookinfo application is running, send a request to it by a curl command from some pod, for example from ratings:
+```
+ kubectl exec -it $(kubectl get pod -l app=ratings -o jsonpath='{.items[0].metadata.name}') -c ratings -- curl productpage:9080/productpage | grep -o "<title>.*</title>"
+ ```
+## 2.3. Define the gateway for the application
 ```
 kubectl apply -f istio/demo/samples/bookinfo/networking/bookinfo-gateway.yaml
 ```
-##2.3 Confirm the app is accessible from outside the cluster 
+## 2.4 Confirm the app is accessible from outside the cluster 
 ```
 curl -s http://${GATEWAY_URL}/productpage | grep -o "<title>.*</title>"
 <title>Simple Bookstore App</title>
 ```
 
-##2.4. Apply default destination rules
+## 2.5. Apply default destination rules
 * If you did not enable mutual TLS, execute this command:
  ```
  kubectl apply -f istio/demo/samples/bookinfo/networking/destination-rule-all.yaml
