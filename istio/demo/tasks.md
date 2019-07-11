@@ -35,6 +35,7 @@ kubectl apply -f istio/demo/samples/bookinfo/networking/virtual-service-ratings-
 kubectl apply -f istio/demo/samples/bookinfo/networking/virtual-service-ratings-test-abort.yaml
 ```
 #3.Traffic Shifting
+
 1. To get started, run this command to route all traffic to the v1 version of each microservice.
 ```
 kubectl apply -f istio/demo/samples/bookinfo/networking/virtual-service-all-v1.yaml
