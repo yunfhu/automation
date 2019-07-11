@@ -9,11 +9,13 @@ import (
 
 var wg sync.WaitGroup
 
+const url = "http://10.21.19.77:31380/productpage"
+
 func visitBook(seq int) {
 	log.Printf("robot %d online", seq)
 	defer wg.Done()
 	for {
-		resp, err := http.Get("http://10.21.19.77:31380/productpage")
+		resp, err := http.Get(url)
 		if err != nil {
 			log.Panic("visit productPage got err")
 		}

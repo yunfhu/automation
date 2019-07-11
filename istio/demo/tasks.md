@@ -46,3 +46,7 @@ kubectl apply -f istio/demo/samples/bookinfo/networking/virtual-service-reviews-
 ```
 
 
+
+
+
+

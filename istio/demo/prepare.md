@@ -20,15 +20,16 @@ kubectl label namespace huyf istio-injection=enabled
 #deploy sample microservice
 kubectl apply -f istio/demo/samples/bookinfo/platform/kube/bookinfo.yaml
 ```
-##2.2 Confirm the app is accessible from outside the cluster 
+##2.2. Define the gateway for the application
+```
+kubectl apply -f istio/demo/samples/bookinfo/networking/bookinfo-gateway.yaml
+```
+##2.3 Confirm the app is accessible from outside the cluster 
 ```
 curl -s http://${GATEWAY_URL}/productpage | grep -o "<title>.*</title>"
 <title>Simple Bookstore App</title>
 ```
-##2.3. Define the gateway for the application
-```
-kubectl apply -f istio/demo/samples/bookinfo/networking/bookinfo-gateway.yaml
-```
+
 ##2.4. Apply default destination rules
 * If you did not enable mutual TLS, execute this command:
  ```
@@ -44,6 +45,8 @@ kubectl get destinationrules -o yaml
 ```
 
 more infomation pls read [bookinfo examples](https://istio.io/docs/examples/bookinfo/)
+
+
 
 
 
