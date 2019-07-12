@@ -220,3 +220,13 @@ kubectl config set-credentials dashboard-admin --token=$DASH_TOCKEN --kubeconfig
 kubectl config set-context dashboard-admin@kubernetes --cluster=kubernetes --user=dashboard-admin --kubeconfig=/root/dashbord-admin.conf
 
 kubectl config user-context dashboard-admin@kubernets --kubeconfig=/root/dashbord-admin.conf
+
+
+* upgrade bash:
+however Bash 4 has lots of lovely features including associative arrays that I’d like use. Hence, after reading on the internet for a bit, I’ve installed it on my Mac. This turned out to require just 3 commands:
+
+```
+brew install bash
+sudo bash -c 'echo /usr/local/bin/bash >> /etc/shells' 
+chsh -s /usr/local/bin/bash
+```

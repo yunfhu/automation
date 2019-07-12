@@ -39,7 +39,7 @@ kubectl apply -f istio/demo/samples/bookinfo/networking/virtual-service-ratings-
 1. To get started, run this command to route all traffic to the v1 version of each microservice.
 ```
 kubectl apply -f istio/demo/samples/bookinfo/networking/virtual-service-all-v1.yaml
-```
+``` 
 2. Transfer 50% of the traffic from reviews:v1 to reviews:v3 with the following command:
 
 ```
