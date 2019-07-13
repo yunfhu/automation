@@ -19,7 +19,7 @@ import (
 
 var (
 	nameSpace                = "huyf"
-	IstioCtl                 *versioned.Clientset
+	istioCtl                 *versioned.Clientset
 	DefaultServiceCollection VirtualServiceCollection
 )
 
@@ -41,12 +41,12 @@ func (v *VirtualService) Online() {
 	metaService := v.MetaService
 	var cs *v1alpha3.VirtualService
 	var err error
-	ps, geterr := IstioCtl.NetworkingV1alpha3().VirtualServices(nameSpace).Get(metaService.GetObjectMeta().GetName(), v1.GetOptions{})
+	ps, geterr := istioCtl.NetworkingV1alpha3().VirtualServices(nameSpace).Get(metaService.GetObjectMeta().GetName(), v1.GetOptions{})
 	if geterr != nil {
-		cs, err = IstioCtl.NetworkingV1alpha3().VirtualServices(nameSpace).Create(metaService)
+		cs, err = istioCtl.NetworkingV1alpha3().VirtualServices(nameSpace).Create(metaService)
 	} else {
 		metaService.ObjectMeta.SetResourceVersion(ps.GetObjectMeta().GetResourceVersion())
-		cs, err = IstioCtl.NetworkingV1alpha3().VirtualServices(nameSpace).Update(metaService)
+		cs, err = istioCtl.NetworkingV1alpha3().VirtualServices(nameSpace).Update(metaService)
 	}
 	CheckErr(err)
 	log.Printf("Service: %+v  online\n ", cs.Spec.Hosts)
@@ -56,12 +56,12 @@ func (v *VirtualService) Offline() {
 	metaService := v.MetaService
 	var cs *v1alpha3.VirtualService
 	var err error
-	ps, geterr := IstioCtl.NetworkingV1alpha3().VirtualServices(nameSpace).Get(metaService.GetObjectMeta().GetName(), v1.GetOptions{})
+	ps, geterr := istioCtl.NetworkingV1alpha3().VirtualServices(nameSpace).Get(metaService.GetObjectMeta().GetName(), v1.GetOptions{})
 	if geterr != nil {
-		cs, err = IstioCtl.NetworkingV1alpha3().VirtualServices(nameSpace).Create(metaService)
+		cs, err = istioCtl.NetworkingV1alpha3().VirtualServices(nameSpace).Create(metaService)
 	} else {
 		metaService.ObjectMeta.SetResourceVersion(ps.GetObjectMeta().GetResourceVersion())
-		cs, err = IstioCtl.NetworkingV1alpha3().VirtualServices(nameSpace).Update(metaService)
+		cs, err = istioCtl.NetworkingV1alpha3().VirtualServices(nameSpace).Update(metaService)
 	}
 	CheckErr(err)
 	log.Printf("Service: %+v  online\n ", cs.Spec.Hosts)
@@ -81,12 +81,12 @@ func (rule *DestinationRule) Online() {
 	metdaRule := rule.MetaRule
 	var cr *v1alpha3.DestinationRule
 	var err error
-	pr, err := IstioCtl.NetworkingV1alpha3().DestinationRules(nameSpace).Get(metdaRule.GetName(), v1.GetOptions{})
+	pr, err := istioCtl.NetworkingV1alpha3().DestinationRules(nameSpace).Get(metdaRule.GetName(), v1.GetOptions{})
 	if err != nil {
-		cr, err = IstioCtl.NetworkingV1alpha3().DestinationRules(nameSpace).Create(metdaRule)
+		cr, err = istioCtl.NetworkingV1alpha3().DestinationRules(nameSpace).Create(metdaRule)
 	} else {
 		metdaRule.ObjectMeta.ResourceVersion = pr.ObjectMeta.ResourceVersion
-		cr, err = IstioCtl.NetworkingV1alpha3().DestinationRules(nameSpace).Update(metdaRule)
+		cr, err = istioCtl.NetworkingV1alpha3().DestinationRules(nameSpace).Update(metdaRule)
 	}
 	if err != nil {
 		log.Fatalf(err.Error())
@@ -97,7 +97,7 @@ func (rule *DestinationRule) Online() {
 
 func (rule *DestinationRule) Offline() {
 	metaRule := rule.MetaRule
-	err := IstioCtl.NetworkingV1alpha3().DestinationRules(nameSpace).Delete(metaRule.GetName(), &v1.DeleteOptions{})
+	err := istioCtl.NetworkingV1alpha3().DestinationRules(nameSpace).Delete(metaRule.GetName(), &v1.DeleteOptions{})
 	CheckErr(err)
 	log.Printf("rule: %s offline", metaRule.GetName())
 }
@@ -119,7 +119,7 @@ func init() {
 	if err != nil {
 		log.Fatalf("Failed to create istio client: %s", err)
 	}
-	IstioCtl = ctl
+	istioCtl = ctl
 	_, filename, _, _ := runtime.Caller(0)
 	DefaultServiceCollection = VirtualServiceCollectionFromFolder(path.Join(path.Dir(filename), "./config/"))
 
