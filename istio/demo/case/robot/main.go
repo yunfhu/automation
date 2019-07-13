@@ -20,7 +20,7 @@ func visitProductpage(seq int) {
 		// 	log.Panic("visit productPage got err")
 		// }
 		if resp != nil {
-			log.Printf("Robot-%d visit %s,got repsonse status:%s", seq, url, resp.Status)
+			log.Printf("Robot-%d visit productpage,got repsonse status:%s", seq, resp.Status)
 			defer resp.Body.Close()
 		}
 	}
