@@ -11,10 +11,12 @@ func init() {
 
 }
 func main() {
+	reviews100v1 := extApi.VirtualServiceFromYaml("./config/reviews100v1.yaml")
 	reviews50v1 := extApi.VirtualServiceFromYaml("./config/reviews50v1.yaml")
 	reviews100v3 := extApi.VirtualServiceFromYaml("./config/reviews100v3.yaml")
-	time.Sleep(time.Duration(60) * time.Second)
+	reviews100v1.Online()
+	time.Sleep(time.Duration(15) * time.Second)
 	reviews50v1.Online()
-	time.Sleep(time.Duration(60) * time.Second)
+	time.Sleep(time.Duration(15) * time.Second)
 	reviews100v3.Online()
 }

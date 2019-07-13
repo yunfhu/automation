@@ -25,4 +25,7 @@ func main() {
 	ratingsv1delay2s.Online()
 	time.Sleep(time.Duration(30) * time.Second)
 	reviewsv2timeout1s.Online()
+	time.Sleep(time.Duration(30) * time.Second)
+	reviewsv2.Online()
+
 }
