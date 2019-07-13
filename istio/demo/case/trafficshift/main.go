@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	vcluster "../common/vcluster"
 )
@@ -20,7 +21,7 @@ func main() {
 }
 
 func shiftTraffic(config string) {
-	// time.Sleep(time.Duration(60) * time.Second)
+	time.Sleep(time.Duration(60) * time.Second)
 	toShift := vcluster.LoadSrvYaml(config)
 	toShift.ObjectMeta.ResourceVersion = clus.Servics[toShift.GetName()].ObjectMeta.ResourceVersion
 	cr, err := clus.IstioCtl.NetworkingV1alpha3().VirtualServices(clus.NameSpace).Update(&toShift)
