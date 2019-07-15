@@ -13,8 +13,8 @@ func main() {
 	circuitBreak()
 }
 func circuitBreak() {
-	rule := extApi.DestinationRuleFromYaml("./productpagebin.yaml")
-	rule.Online()
+	productpagebin := extApi.DestinationRuleFromYaml("./productpagebin.yaml")
+	productpagebin.Online()
 	time.Sleep(time.Duration(30) * time.Second)
-	defer rule.Offline()
+	defer productpagebin.Offline()
 }
