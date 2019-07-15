@@ -17,6 +17,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
+// author yunfhu
 var (
 	nameSpace                = "huyf"
 	istioCtl                 *versioned.Clientset
@@ -122,7 +123,6 @@ func init() {
 	istioCtl = ctl
 	_, filename, _, _ := runtime.Caller(0)
 	DefaultServiceCollection = VirtualServiceCollectionFromFolder(path.Join(path.Dir(filename), "./config/"))
-
 }
 
 func CheckErr(err error) {
