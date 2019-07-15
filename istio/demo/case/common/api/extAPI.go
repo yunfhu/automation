@@ -34,7 +34,7 @@ type DestinationRule struct {
 	MetaRule *v1alpha3.DestinationRule
 }
 type VirtualServiceCollection struct {
-	Servics (map[string]*VirtualService)
+	Servics map[string]*VirtualService
 }
 
 func (v *VirtualService) Online() {
@@ -81,11 +81,11 @@ func (rule *DestinationRule) Online() {
 	metdaRule := rule.MetaRule
 	var cr *v1alpha3.DestinationRule
 	var err error
-	pr, err := istioCtl.NetworkingV1alpha3().DestinationRules(nameSpace).Get(metdaRule.GetName(), v1.GetOptions{})
-	if err != nil {
+	pr, geterr := istioCtl.NetworkingV1alpha3().DestinationRules(nameSpace).Get(metdaRule.GetName(), v1.GetOptions{})
+	if geterr != nil {
 		cr, err = istioCtl.NetworkingV1alpha3().DestinationRules(nameSpace).Create(metdaRule)
 	} else {
-		metdaRule.ObjectMeta.ResourceVersion = pr.ObjectMeta.ResourceVersion
+		metdaRule.GetObjectMeta().SetResourceVersion(pr.GetObjectMeta().GetResourceVersion())
 		cr, err = istioCtl.NetworkingV1alpha3().DestinationRules(nameSpace).Update(metdaRule)
 	}
 	if err != nil {
